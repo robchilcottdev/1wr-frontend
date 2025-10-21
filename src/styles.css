@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@font-face {
+  font-family: 'Special Elite';
+  src: url('/fonts/SpecialElite.ttf') format('truetype');
+}
+
+.typewriter-text {
+  font-family: 'Special Elite', monospace;
+}
+

@@ -1,0 +1,21 @@
+<div class="w-[75%] m-auto pt-32">
+    <app-title-block />
+    <hr class="pb-2 text-red-900"/>
+    <div class="text-xl text-red-900">The antidote to generative AI</div>    
+    <div class="flex flex-col justify-center w-max m-auto gap-2 mt-6 typewriter-text text-lg">
+        <a type="button" routerLink="/stories/new" class=" bg-red-500 hover:bg-red-300 text-white py-1 px-3 rounded-xl border-black border-1">
+            Start story
+        </a>
+        <a type="button" routerLink="/stories" class=" bg-neutral-100 hover:bg-neutral-200 text-black py-1 px-2 rounded-xl border-black border-1">
+            Join story
+        </a>
+        <a type="button" routerLink="/about" class="bg-neutral-100 hover:bg-neutral-200 text-black py-1 px-2 rounded-xl border-black border-1">
+            About
+        </a>
+        <a type="button" (click)="resetAll()" class="cursor-pointer bg-black hover:bg-neutral-800 text-white py-1 px-2 rounded-xl border-black border-1">
+            Reset all
+        </a>
+    </div>
+    
+    <h3 class="text-sm text-black mt-12">A collaborative story-writing game,<br/>created by Rob Chilcott &copy; 2025</h3>
+</div>

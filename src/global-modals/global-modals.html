@@ -1,0 +1,20 @@
+  <dialog #dialogContinueStory class="modal">
+    <div class="modal-box bg-neutral-100">
+      <p class="py-2">Hi {{ retrievedAuthorName() }}! You have a story, '{{ retrievedStoryTitle() }}', in progress. Do you want to continue it?</p>
+      <div class="modal-action typewriter-text">
+          <button (click)="continueStory()" class="btn bg-red-500 w-max">Yes</button>
+          <button (click)="returnToMenu()" class="btn w-max">No</button>
+          <button (click)="disconnect()" class="btn btn-outline w-max">I'm not {{ retrievedAuthorName() }}</button>
+      </div>
+    </div>
+  </dialog>
+
+   <dialog #dialogStoryNotFound class="modal">
+    <div class="modal-box bg-neutral-100">
+      <p class="py-2">Welcome back, {{ retrievedAuthorName() }}. The story you had in progress is no longer available.</p>
+      <div class="modal-action typewriter-text">
+        <button (click)="closeStoryNotFoundDialog()" class="btn w-max">Too bad</button>
+        <button (click)="disconnect()" class="btn btn-outline w-max">I'm not {{ retrievedAuthorName() }}</button>
+      </div>
+    </div>
+  </dialog>

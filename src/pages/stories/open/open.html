@@ -1,0 +1,31 @@
+<div class="pt-8"><app-title-block /></div>
+
+@for (story of retrievedStories(); track story.storyId) {
+<div (click)="joinStory(story.storyId)"
+    class="flex align-middle cursor-pointer text-left my-2 bg-neutral-300 hover:bg-neutral-400">
+    <div class="border-l-4 border-red-500 hover:border-red-300 p-3">
+        <span class="uppercase border-1 rounded-md bg-neutral-500 text-white shadow-xs shadow-black text-xs p-0.5 mr-3">
+            {{ story.storyId }}
+        </span>
+        <strong>{{ story.title }}</strong>
+        <div class="text-gray-500">{{ story.authors! | authorList }}</div>
+    </div>
+</div>
+}
+
+@if (retrievedStories()!.length === 0) {
+<div>There are no currently open stories to join.</div>
+}
+<div class="flex justify-center gap-2 mt-3">
+    <button (click)="refresh($event)"
+        class=" bg-neutral-100 hover:bg-neutral-200 text-black py-1 px-2 rounded-xl border-black border-1">
+        Refresh list
+    </button>
+
+    <button routerLink="/stories/new"
+        class=" bg-red-500 hover:bg-red-300 text-white py-1 px-3 rounded-xl border-black border-1">
+        Start new story
+    </button>
+</div>
+
+<app-actionbar />
