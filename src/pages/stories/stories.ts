@@ -1,0 +1,250 @@
+import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit, afterEveryRender, computed, effect } from '@angular/core';
+import { TitleBlock } from "../../components/title-block/title-block";
+import { ApiService } from '../../services/api-service';
+import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState } from '../../types';
+import { AuthorListPipe } from '../../core/author-list-pipe';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { SocketService } from '../../services/socket-service';
+import { RestrictStoryword } from "../../core/restrict-storyword-directive";
+import { AudioService } from '../../services/audio-service';
+
+@Component({
+  selector: 'app-stories',
+  imports: [TitleBlock, FormsModule, AuthorListPipe, RestrictStoryword],
+  templateUrl: './stories.html',
+  styleUrl: './stories.css'
+})
+
+export class Stories implements AfterViewInit {
+  @ViewChild('dialogEnterName') dialogEnterName!: ElementRef;
+  @ViewChild('dialogLeave') dialogLeave!: ElementRef;
+
+  protected readonly router = inject(Router);
+  protected readonly route = inject(ActivatedRoute);
+  protected readonly apiService = inject(ApiService);
+  protected readonly socketService = inject(SocketService);
+  protected readonly audioService = inject(AudioService);
+
+  protected storyId = this.route.snapshot.paramMap.get("id");
+  protected retrievedStory = signal<Story | null>(null);
+  protected storyState = signal(StoryState.AwaitingAuthors);
+  
+  public messages = signal("");
+
+  protected authorName = signal("");
+  protected showAuthorNameClashMessage = signal(false);
+  protected showAuthorNameInvalid = signal(false);
+  protected authorNameConfirmed = signal(false);
+  protected showVotingButtons = signal(false);
+  protected wordToAdd = signal("");
+
+  // COMPUTED
+  protected thisAuthorIsCreator = computed(() => {
+    const creator = this.retrievedStory()!.authors.find(a => a.isCreator);
+    return creator?.id === localStorage.getItem(LocalStorage.UserId);
+  });
+
+  protected creatorName = computed(() => {
+    if (this.retrievedStory()!.authors.length === 0) return "";
+    const creator = this.retrievedStory()!.authors.find(a => a.isCreator);
+    return creator?.name;
+  });
+
+  protected isThisAuthorsTurn = computed (() => {
+    if (this.retrievedStory()!.authors.length === 0) return false;
+    const authorTurnIndex = this.retrievedStory()!.authorTurn;
+    const currentTurnAuthor = this.retrievedStory()!.authors[authorTurnIndex];
+    const thisAuthorId = localStorage.getItem(LocalStorage.UserId);
+
+    return currentTurnAuthor.id === thisAuthorId;
+  });
+
+  protected currentAuthorTurnName = computed (() => {
+    if (this.retrievedStory()!.authors.length === 0) return "";
+    const authorTurnIndex = this.retrievedStory()!.authorTurn;
+    const currentTurnAuthor = this.retrievedStory()!.authors[authorTurnIndex];
+
+    return currentTurnAuthor.name;
+  });
+
+
+  protected showAwaitingAuthorsBlock = computed(() => {
+    return (this.storyState() === StoryState.AwaitingAuthors && this.authorNameConfirmed()) || this.retrievedStory()!.authors.length < 2;
+  });
+
+initializeSocket(){
+    const socket: WebSocket = this.socketService.socket;
+    socket.addEventListener("message", (event: any) => {
+      const message = JSON.parse(event.data);
+      switch (message.type) {      
+        case SocketMessageType.WordAdded:
+          console.log("SocketService: word added to story");
+          this.getStory();
+          let messageString = `${message.author} added '${message.word}' to the story. ${message.nextAuthor}, it's your turn.`;          
+          this.messages.set(messageString);
+          this.audioService.playSound(AudioFile.TypewriterKeystroke);
+          //this.flashTitleBar(`1wr: ${message.author} added a word!`);
+                        
+          break;
+          case SocketMessageType.AuthorJoined:
+          console.log("SocketService: author joined:", message);
+          this.getStory();
+          this.messages.set(`${message.author} joined the story.`);
+          //this.flashTitleBar("1wr: Author joined");
+          break;
+        case SocketMessageType.AuthorLeft:
+          console.log("SocketService: author left:", message);
+          this.getStory();
+          this.messages.set(`${message.author} left the story.`);
+          //this.flashTitleBar("1wr: Author left");
+          break;
+        case SocketMessageType.StateChanged:
+          console.log("SocketService: state changed:", message);
+          this.getStory();
+          this.messages.set(`The story has begun!`);
+          //this.flashTitleBar("1wr: story began!");
+          break;          
+        default: // for currently unhandled socket message types
+          console.log(JSON.stringify(message)); 
+          break;
+      }  
+    });
+  }
+
+  getStory() {
+    if (this.storyId) {
+      this.apiService.getStory(this.storyId).subscribe({
+        next: (story: Story) => {
+          this.retrievedStory.set(story);
+          this.storyState.set(story.state);
+          console.log("Latest retrieved story:", this.retrievedStory()!);
+
+        },
+        error: (err) => {
+          console.log("Error retrieving story:", err);
+          this.messages.set("Error retrieving story. Try reloading the page.");
+        }
+      });
+    } else {
+      this.messages.set("Story not found.");
+    }
+  }
+
+  joinStory() {
+    if (this.authorName().length < 3 || this.authorName().length > 10){
+      this.showAuthorNameInvalid.set(true);
+      return;
+    }
+    if (this.retrievedStory()!.authors.some(a => a.name === this.authorName())){
+      this.showAuthorNameClashMessage.set(true);
+      return;
+    }
+
+    localStorage.setItem(LocalStorage.UserName, this.authorName());
+    localStorage.setItem(LocalStorage.CurrentStoryId, this.storyId!);
+
+    const storyId = localStorage.getItem(LocalStorage.CurrentStoryId)!;
+    const authorId = localStorage.getItem(LocalStorage.UserId)!;
+    const authorName = localStorage.getItem(LocalStorage.UserName)!;
+
+    this.dialogEnterName.nativeElement.close();
+    this.apiService.joinStory(storyId, authorId, authorName).subscribe({
+      next: (story: Story) => {
+        this.retrievedStory.set(story);
+        this.authorNameConfirmed.set(true);
+      },
+      error: (err) => {
+        console.log("Error joining story:", err);
+      }
+    })
+  }
+
+  closeEnterNameDialog() {
+    this.dialogEnterName.nativeElement.close();
+    this.router.navigateByUrl("/");
+  }
+
+  leave(){
+    this.dialogLeave.nativeElement.showModal();
+  }
+
+  confirmLeaveStory(){
+    const storyId = this.storyId!;
+    const authorId = localStorage.getItem(LocalStorage.UserId)!;
+    const authorName = localStorage.getItem(LocalStorage.UserName)!;
+
+    this.apiService.leaveStory(storyId, authorId, authorName).subscribe({
+      next: (story: Story) => {
+        this.dialogLeave.nativeElement.close();
+        this.router.navigateByUrl("/");
+      },
+      error: (err) => {
+        console.log("Error leaving story:", err);
+        this.dialogLeave.nativeElement.close();
+        this.router.navigateByUrl("/");
+      }
+    })
+  }
+
+  beginStory(){
+    this.apiService.updateStoryState(this.storyId!, StoryState.InProgress).subscribe({
+      next: (story: Story) => {
+        this.messages.set(`${story.authors[story.authorTurn].name}, it's your turn`);
+        this.getStory();
+      },
+      error: (err) => {
+        console.log("Error beginning story:", err);
+        this.messages.set("Error starting story");
+      }
+    });
+  }
+
+    addWord() {
+    if (!this.wordToAdd()) {
+      this.messages.set("No passes allowed! (Yet.) Please add a word.");
+      return;
+    }
+
+    if (this.wordToAdd().length > 20) {
+      this.messages.set("So you like big words? 20 characters should be more than enough!");
+      this.wordToAdd.set(this.wordToAdd().slice(0, 19));
+      return;
+    }
+    this.apiService.addWord(this.storyId!, this.wordToAdd(), localStorage.getItem(LocalStorage.UserName)!).subscribe({
+      next: (story: Story) => {
+        this.retrievedStory.set(story);
+      },
+      error: (err) => {
+        this.messages.set("Error adding word");
+      },
+      complete: () => {
+        this.wordToAdd.set("");
+      }
+    });
+  }
+
+  flashTitleBar(message: string){
+    document.title = message;
+    setTimeout(()=> {
+      document.title = "1WordRobin";
+    }, 2000);
+  }
+
+  constructor() {
+    this.initializeSocket();
+    this.messages.set("");
+    this.getStory();
+
+    afterEveryRender(() => {
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // check if this user already has a name, and if so pre-populate the welcome dialog
+    if (localStorage.getItem(LocalStorage.UserName)){
+      this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
+    }
+    this.dialogEnterName.nativeElement.showModal();
+  }
+}
