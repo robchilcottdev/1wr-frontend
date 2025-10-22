@@ -31,8 +31,8 @@ export class ApiService {
      return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/join`, { authorId, authorName });
   }
 
-  leaveStory(storyId: string, authorId: string, authorName: string) {
-     return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/leave`, { authorId, authorName });
+  leaveStory(storyId: string, authorName: string) {
+     return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/leave`, { authorName });
   }
 
   updateStoryState(storyId: string, state: StoryState){

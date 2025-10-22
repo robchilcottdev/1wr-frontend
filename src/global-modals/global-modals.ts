@@ -14,6 +14,7 @@ export class GlobalModals {
   
   protected retrievedStoryTitle = signal("");
   protected retrievedStoryId = signal("");
+  protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
   
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
@@ -21,14 +22,12 @@ export class GlobalModals {
   
   constructor() {
     // check local storage for current player, current story
-    const userId = localStorage.getItem(LocalStorage.UserId);
-    const userName = localStorage.getItem(LocalStorage.UserName);
-    const storyId = localStorage.getItem(LocalStorage.CurrentStoryId);
+    this.retrievedAuthorId.set(localStorage.getItem(LocalStorage.UserId)!);
+    this.retrievedAuthorName.set(localStorage.getItem(LocalStorage.UserName)!);
+    this.retrievedStoryId.set(localStorage.getItem(LocalStorage.CurrentStoryId)!);
 
-    if (userId && userName && storyId) {
-      this.retrievedStoryId.set(storyId);
-      this.retrievedAuthorName.set(userName);
-      this.apiService.getStory(storyId).subscribe({
+    if (this.retrievedStoryId()) {
+      this.apiService.getStory(this.retrievedStoryId()).subscribe({
         next: (story: Story) => {
           this.retrievedStoryTitle.set(story.title);
           this.openContinueStoryDialog();
@@ -55,15 +54,31 @@ export class GlobalModals {
   }
 
   returnToMenu() {
+    this.removeAuthorFromStoryByName(this.retrievedStoryId(), this.retrievedAuthorName());
     localStorage.removeItem(LocalStorage.CurrentStoryId);
     this.closeContinueStoryDialog();
     this.router.navigateByUrl("/");
   }
 
   disconnect() {
+    console.log("reached disconnect with retrievedStoryId:", this.retrievedStoryId());
+    if (this.retrievedStoryId()){
+      this.removeAuthorFromStoryByName(this.retrievedStoryId(), this.retrievedAuthorName());
+0    }
     localStorage.removeItem(LocalStorage.UserName);
     this.dialogStoryNotFound.nativeElement.close();
     this.dialogContinueStory.nativeElement.close();
     this.router.navigateByUrl("/");
+  }
+
+  removeAuthorFromStoryByName(storyId: string, authorName: string){
+    this.apiService.leaveStory(storyId, authorName).subscribe({
+      next: () => {
+        // nothing to do here - updated story will be retrieved on stories/{id} page
+      },
+      error: (err) => {
+        console.log("Error removing author from the story:", err);
+      }
+    });
   }
 }

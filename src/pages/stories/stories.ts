@@ -131,15 +131,10 @@ initializeSocket(){
 
   joinStory(skipNameCheck: boolean = false) {
     if (!skipNameCheck){
-      if (this.authorName().length < 3 || this.authorName().length > 10){
-        this.showAuthorNameInvalid.set(true);
-        return;
-      }
       if (this.retrievedStory()!.authors.some(a => a.name === this.authorName())){
         this.showAuthorNameClashMessage.set(true);
         return;
       }
-
     }
     
     localStorage.setItem(LocalStorage.UserName, this.authorName());
@@ -168,21 +163,26 @@ initializeSocket(){
   }
 
   leave(){
+    if (!this.retrievedStory()) {
+      // no story - home you go
+      this.router.navigateByUrl("/");
+    }
+
     this.dialogLeave.nativeElement.showModal();
   }
 
   confirmLeaveStory(){
     const storyId = this.storyId!;
-    const authorId = localStorage.getItem(LocalStorage.UserId)!;
     const authorName = localStorage.getItem(LocalStorage.UserName)!;
 
-    this.apiService.leaveStory(storyId, authorId, authorName).subscribe({
+    this.apiService.leaveStory(storyId, authorName).subscribe({
       next: (story: Story) => {
         this.dialogLeave.nativeElement.close();
         this.router.navigateByUrl("/");
       },
       error: (err) => {
         console.log("Error leaving story:", err);
+        // probably the story is long gone, leave anyway
         this.dialogLeave.nativeElement.close();
         this.router.navigateByUrl("/");
       }
@@ -241,6 +241,7 @@ initializeSocket(){
   }
 
   ngAfterViewInit(): void {
+    if (!this.retrievedStory()) return;
     // check if this user already has a name, and if so skip the welcome dialog
     if (localStorage.getItem(LocalStorage.UserName)){
       this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);

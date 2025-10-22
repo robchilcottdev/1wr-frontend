@@ -1,11 +1,11 @@
 <div class="pt-8"><app-title-block /></div>
 
-<input #inputTitle type="text" [(ngModel)]="storyTitle" (keyup.enter)="handleBeginStory($event)" placeholder="Story title"
-    class="input bg-neutral-100 border-1 border-black" />
+<input #inputTitle type="text" [(ngModel)]="storyTitle" minlength="3" maxlength="50" (keyup.enter)="handleBeginStory($event)" placeholder="Story title (3-50 characters)"
+    class="input bg-neutral-100 border border-black" />
 
 <div class="flex flex-col justify-center m-auto w-max gap-2 mt-6">
     <a type="button" href="#" (click)="handleBeginStory($event)"
-        class="typewriter-text bg-red-500 hover:bg-red-300 text-white py-1 px-2 rounded-xl border-black border-1">
+        class="typewriter-text bg-red-500 hover:bg-red-300 text-white py-1 px-2 rounded-xl border-black border">
         Begin
     </a>
 </div>
