@@ -5,9 +5,7 @@
 
     <section id="title-block" class="bg-white text-black shadow-neutral-400 shadow-sm p-2">
         <h1 class="text-xl font-bold">{{ retrievedStory()!.title }}</h1>
-        @if (!showAwaitingAuthorsBlock()){
-            <h2 class="font-semibold">a story by {{ retrievedStory()!.authors! | authorList}}</h2>
-        }
+        <h2 class="font-semibold">a story by {{ retrievedStory()!.authors! | authorList}}</h2>
     </section>
 
     @if (messages()){
@@ -16,34 +14,16 @@
     </section>
     }
 
-    @if (showAwaitingAuthorsBlock() && authorNameConfirmed()){
-        <section id="awaitingAuthors">
-            <div class="text-lg text-red-950 mt-3">Fellow authors waiting</div>
-            @for (author of retrievedStory()?.authors; track author.id) {                            
-                @if (author.name != authorName()){
-                    <div>                
-                        {{ author.name }}
-                        @if(author.name === creatorName()){
-                            <span> (creator)</span>
-                        }
-                    </div>
-                }                
-            }
+    @if (stateAwaitingAuthors() && thisAuthorIsCreator()){
+    <div class="flex justify-center">
+        <button (click)="beginStory()"
+        [disabled]="retrievedStory()!.authors.length < 2"
+        [class.bg-red-500]="retrievedStory()!.authors.length >= 2"
+        class="btn typewriter-text bg-gray-400 w-max mt-3"
+        >Begin</button> 
+    </div>
+    }    
 
-            @if (thisAuthorIsCreator()){
-                @if(retrievedStory()!.authors.length < 2){
-                    <button disabled class="btn typewriter-text bg-neutral-100 text-black w-max mt-3">At least 2 authors required...</button>
-                } @else {
-                    <button (click)="beginStory()" class="btn typewriter-text bg-red-500 w-max mt-3">Let's begin!</button>
-                }
-            } @else if(retrievedStory()!.authors.length > 1) {
-                <div class="alert alert-info mt-3">Waiting for {{ creatorName() }} to begin.</div>
-            }
-
-        </section>
-    }
-
-    @if (authorNameConfirmed()){
     <!-- need to calculate max playfield height based on viewpoint height, accounting for actionbar -->
     <section id="playfield"
         [class.bg-amber-50]="isThisAuthorsTurn()"
@@ -58,31 +38,27 @@
                     {{ storyWord.word }}&nbsp;
                 }
             }
-            @if(retrievedStory()!.authors.length > 1 && !showAwaitingAuthorsBlock()){
-                <div class="cursor inline-block align-text-bottom"></div>
-            }
         </div>
         
 
-        @if (isThisAuthorsTurn() && retrievedStory()!.authors.length > 1 && !showAwaitingAuthorsBlock()){
-            <div class="flex mt-3">
-                <label class="input bg-white w-full">
-                    <input [(ngModel)]="wordToAdd" (keyup.enter)="addWord()" appRestrictStoryword placeholder="Your word"
-                        class="text-gray-500 font-semibold" />
-                </label>
-                <button class="btn bg-black text-white rounded-r-full" (click)="addWord()">Add</button>
-            </div>
-            <p class="text-xs text-left text-gray-500 mt-2">Hints: start you word with <strong>\</strong> (back-slash) to begin a new paragraph.</p>
+    @if (isThisAuthorsTurn() && stateInProgress()){
+        <div class="flex mt-3">
+            <label class="input bg-white w-full">
+                <input [(ngModel)]="wordToAdd" (keyup.enter)="addWord()" appRestrictStoryword autocapitalize="none" placeholder="Your word"
+                    class="text-gray-500 font-semibold" />
+            </label>
+            <button class="btn bg-black text-white rounded-r-full" (click)="addWord()">Add</button>
+        </div>
+        <p class="text-xs text-left text-gray-500 mt-2">Hints: start you word with <strong>\</strong> (back-slash) to begin a new paragraph.</p>
 
-        }@else if(retrievedStory()!.authors.length > 1 && !showAwaitingAuthorsBlock()) {
-            <div class="flex mt-3 text-gray-500">
-                Waiting for {{ currentAuthorTurnName() }}...
-            </div>
-        }
-    </section>
+    }@else if(retrievedStory()!.authors.length > 1) {
+        <div class="flex mt-3 text-gray-500">
+            Waiting for {{ currentAuthorTurnName() }}...
+        </div>
     }
-}@else{
-    <h1>Story not found.</h1>
+</section>
+} @else {
+    <h1>Story not found</h1>
 }
 
 <section id="action-buttons">

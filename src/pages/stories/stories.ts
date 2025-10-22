@@ -29,7 +29,6 @@ export class Stories implements AfterViewInit {
 
   protected storyId = this.route.snapshot.paramMap.get("id");
   protected retrievedStory = signal<Story | null>(null);
-  protected storyState = signal(StoryState.AwaitingAuthors);
   
   public messages = signal("");
 
@@ -38,6 +37,9 @@ export class Stories implements AfterViewInit {
   protected showAuthorNameInvalid = signal(false);
   protected authorNameConfirmed = signal(false);
   protected showVotingButtons = signal(false);
+  protected stateAwaitingAuthors = signal(false);
+  protected stateInProgress = signal(false);
+
   protected wordToAdd = signal("");
 
   // COMPUTED
@@ -69,58 +71,54 @@ export class Stories implements AfterViewInit {
     return currentTurnAuthor.name;
   });
 
-
-  protected showAwaitingAuthorsBlock = computed(() => {
-    return (this.storyState() === StoryState.AwaitingAuthors && this.authorNameConfirmed()) || this.retrievedStory()!.authors.length < 2;
-  });
-
 initializeSocket(){
     const socket: WebSocket = this.socketService.socket;
     socket.addEventListener("message", (event: any) => {
       const message = JSON.parse(event.data);
+      this.logSocketMessage(message);
       switch (message.type) {      
         case SocketMessageType.WordAdded:
-          console.log("SocketService: word added to story");
           this.getStory();
-          let messageString = `${message.author} added '${message.word}' to the story. ${message.nextAuthor}, it's your turn.`;          
+          let messageString = `${message.author} added '${message.word.replace("\\", "")}' to the story. ${message.nextAuthor}, it's your turn.`;          
           this.messages.set(messageString);
-          this.audioService.playSound(AudioFile.TypewriterKeystroke);
-          //this.flashTitleBar(`1wr: ${message.author} added a word!`);
-                        
+          this.audioService.playSound(AudioFile.TypewriterKeystroke);                        
           break;
           case SocketMessageType.AuthorJoined:
-          console.log("SocketService: author joined:", message);
           this.getStory();
           this.messages.set(`${message.author} joined the story.`);
-          //this.flashTitleBar("1wr: Author joined");
           break;
         case SocketMessageType.AuthorLeft:
-          console.log("SocketService: author left:", message);
           this.getStory();
           this.messages.set(`${message.author} left the story.`);
-          //this.flashTitleBar("1wr: Author left");
           break;
         case SocketMessageType.StateChanged:
-          console.log("SocketService: state changed:", message);
           this.getStory();
-          this.messages.set(`The story has begun!`);
-          //this.flashTitleBar("1wr: story began!");
           break;          
         default: // for currently unhandled socket message types
-          console.log(JSON.stringify(message)); 
           break;
       }  
     });
   }
 
   getStory() {
+    const previousStoryState = this.retrievedStory()?.state ?? StoryState.AwaitingAuthors;
+    const previousAuthorCount = this.retrievedStory()?.authors?.length ?? 0;
     if (this.storyId) {
       this.apiService.getStory(this.storyId).subscribe({
         next: (story: Story) => {
           this.retrievedStory.set(story);
-          this.storyState.set(story.state);
-          console.log("Latest retrieved story:", this.retrievedStory()!);
-
+          if (story.state != previousStoryState && story.state === StoryState.InProgress) {
+            this.messages.set(`${this.currentAuthorTurnName()}, add the next word.`);
+          } 
+          if (story.authors.length < 2) this.messages.set("Awaiting minimum of two authors...");
+          if (story.authors.length >= 2 && previousAuthorCount < 2){
+            this.messages.set(`Waiting for ${this.creatorName()} to start the story.`);
+          }
+          
+          this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
+          this.stateInProgress.set(story.state === StoryState.InProgress);
+          
+          console.log("Latest story:", story);
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
@@ -143,8 +141,9 @@ initializeSocket(){
         return;
       }
 
-      localStorage.setItem(LocalStorage.UserName, this.authorName());
     }
+    
+    localStorage.setItem(LocalStorage.UserName, this.authorName());
     localStorage.setItem(LocalStorage.CurrentStoryId, this.storyId!);
 
     const storyId = localStorage.getItem(LocalStorage.CurrentStoryId)!;
@@ -152,6 +151,7 @@ initializeSocket(){
     const authorName = localStorage.getItem(LocalStorage.UserName)!;
 
     this.dialogEnterName.nativeElement.close();
+
     this.apiService.joinStory(storyId, authorId, authorName).subscribe({
       next: (story: Story) => {
         this.retrievedStory.set(story);
@@ -203,7 +203,7 @@ initializeSocket(){
     });
   }
 
-    addWord() {
+  addWord() {
     if (!this.wordToAdd()) {
       this.messages.set("No passes allowed! (Yet.) Please add a word.");
       return;
@@ -217,6 +217,7 @@ initializeSocket(){
     this.apiService.addWord(this.storyId!, this.wordToAdd(), localStorage.getItem(LocalStorage.UserName)!).subscribe({
       next: (story: Story) => {
         this.retrievedStory.set(story);
+        // flash the latest word somehow?
       },
       error: (err) => {
         this.messages.set("Error adding word");
@@ -227,11 +228,8 @@ initializeSocket(){
     });
   }
 
-  flashTitleBar(message: string){
-    document.title = message;
-    setTimeout(()=> {
-      document.title = "1WordRobin";
-    }, 2000);
+  logSocketMessage(message: any){
+    console.log(`${new Date().toUTCString()} - Socket message received: ${message.type}`)
   }
 
   constructor() {
