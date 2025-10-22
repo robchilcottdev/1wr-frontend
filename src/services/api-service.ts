@@ -2,14 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { User, Story, Author, VoteDetails, LocalStorage, StoryState } from '../types';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
   protected readonly http = inject(HttpClient);
-  // protected readonly baseUrl = 'http://localhost:3000';
-  protected readonly baseUrl = 'https://1wr-fhacb5a7cvdzfcgz.ukwest-01.azurewebsites.net';
+  protected readonly baseUrl = environment.apiUrl;
 
   addStory(title: string) : Observable<Story> {    
     return this.http.post<Story> (`${this.baseUrl}/story/add`, { authorId: localStorage.getItem(LocalStorage.UserId)!, title });

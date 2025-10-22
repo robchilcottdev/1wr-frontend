@@ -19,6 +19,7 @@ import { AudioService } from '../../services/audio-service';
 export class Stories implements AfterViewInit {
   @ViewChild('dialogEnterName') dialogEnterName!: ElementRef;
   @ViewChild('dialogLeave') dialogLeave!: ElementRef;
+  @ViewChild('storyBodyText') storyBodyText!: ElementRef;
 
   protected readonly router = inject(Router);
   protected readonly route = inject(ActivatedRoute);
@@ -131,17 +132,19 @@ initializeSocket(){
     }
   }
 
-  joinStory() {
-    if (this.authorName().length < 3 || this.authorName().length > 10){
-      this.showAuthorNameInvalid.set(true);
-      return;
-    }
-    if (this.retrievedStory()!.authors.some(a => a.name === this.authorName())){
-      this.showAuthorNameClashMessage.set(true);
-      return;
-    }
+  joinStory(skipNameCheck: boolean = false) {
+    if (!skipNameCheck){
+      if (this.authorName().length < 3 || this.authorName().length > 10){
+        this.showAuthorNameInvalid.set(true);
+        return;
+      }
+      if (this.retrievedStory()!.authors.some(a => a.name === this.authorName())){
+        this.showAuthorNameClashMessage.set(true);
+        return;
+      }
 
-    localStorage.setItem(LocalStorage.UserName, this.authorName());
+      localStorage.setItem(LocalStorage.UserName, this.authorName());
+    }
     localStorage.setItem(LocalStorage.CurrentStoryId, this.storyId!);
 
     const storyId = localStorage.getItem(LocalStorage.CurrentStoryId)!;
@@ -241,10 +244,12 @@ initializeSocket(){
   }
 
   ngAfterViewInit(): void {
-    // check if this user already has a name, and if so pre-populate the welcome dialog
+    // check if this user already has a name, and if so skip the welcome dialog
     if (localStorage.getItem(LocalStorage.UserName)){
       this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
+      this.joinStory(true);
+    } else {
+      this.dialogEnterName.nativeElement.showModal();
     }
-    this.dialogEnterName.nativeElement.showModal();
   }
 }

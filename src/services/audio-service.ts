@@ -6,7 +6,7 @@ import { AudioFile } from '../types';
 })
 export class AudioService {
   playSound(audioFile: AudioFile) {
-    const audio = new Audio(`/audio/${audioFile}`);
+    const audio = new Audio(`assets/audio/${audioFile}`);
     audio.play().catch(error => console.error("Error playing audio:", error));
   }
 }
