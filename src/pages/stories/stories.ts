@@ -36,7 +36,6 @@ export class Stories implements AfterViewInit {
   protected showAuthorNameClashMessage = signal(false);
   protected showAuthorNameInvalid = signal(false);
   protected authorNameConfirmed = signal(false);
-  protected showVotingButtons = signal(false);
   protected stateAwaitingAuthors = signal(false);
   protected stateInProgress = signal(false);
 
@@ -78,10 +77,10 @@ initializeSocket(){
       this.logSocketMessage(message);
       switch (message.type) {      
         case SocketMessageType.WordAdded:
-          this.getStory();
           let messageString = `${message.author} added '${message.word.replace("\\", "")}' to the story. ${message.nextAuthor}, it's your turn.`;          
           this.messages.set(messageString);
-          this.audioService.playSound(AudioFile.TypewriterKeystroke);                        
+          this.audioService.playSound(AudioFile.TypewriterKeystroke);     
+          this.getStory();
           break;
           case SocketMessageType.AuthorJoined:
           this.getStory();
