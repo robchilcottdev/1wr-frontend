@@ -26,7 +26,7 @@ export class GlobalModals {
     this.retrievedAuthorName.set(localStorage.getItem(LocalStorage.UserName)!);
     this.retrievedStoryId.set(localStorage.getItem(LocalStorage.CurrentStoryId)!);
 
-    if (this.retrievedStoryId()) {
+    if (this.retrievedStoryId() && this.retrievedAuthorName()) {
       this.apiService.getStory(this.retrievedStoryId()).subscribe({
         next: (story: Story) => {
           this.retrievedStoryTitle.set(story.title);

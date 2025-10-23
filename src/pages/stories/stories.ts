@@ -116,8 +116,6 @@ initializeSocket(){
           
           this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
           this.stateInProgress.set(story.state === StoryState.InProgress);
-          
-          console.log("Latest story:", story);
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
@@ -234,14 +232,13 @@ initializeSocket(){
   constructor() {
     this.initializeSocket();
     this.messages.set("");
-    this.getStory();
 
     afterEveryRender(() => {
     });
   }
 
   ngAfterViewInit(): void {
-    if (!this.retrievedStory()) return;
+    this.getStory();
     // check if this user already has a name, and if so skip the welcome dialog
     if (localStorage.getItem(LocalStorage.UserName)){
       this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
