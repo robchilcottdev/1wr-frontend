@@ -96,7 +96,7 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
 
 <dialog #dialogEnterName class="modal">
     <div class="modal-box bg-neutral-100">
-        <p class="py-2">What's your author name, whether real or wholly fictitious?</p>
+        <p class="py-2">Please enter your author name.</p>
         <input type="text" [(ngModel)]="authorName" min="3" max="10" (keyup.enter)="joinStory()" class="input bg-white w-max"
             placeholder="Enter your name (3-10 characters)" />
         <div class="modal-action typewriter-text">

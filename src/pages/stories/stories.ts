@@ -129,14 +129,14 @@ initializeSocket(){
     }
   }
 
-  joinStory(skipNameCheck: boolean = false) {
-    if (!skipNameCheck){
-      if (this.retrievedStory()!.authors.some(a => a.name === this.authorName())){
-        this.showAuthorNameClashMessage.set(true);
-        return;
-      }
+  joinStory() {
+    if(!this.retrievedStory()) return;
+
+    if(this.retrievedStory()!.authors.some(a => a.name === this.authorName())){
+      this.showAuthorNameClashMessage.set(true);
+      return;
     }
-    
+
     localStorage.setItem(LocalStorage.UserName, this.authorName());
     localStorage.setItem(LocalStorage.CurrentStoryId, this.storyId!);
 
@@ -241,12 +241,11 @@ initializeSocket(){
 
   ngAfterViewInit(): void {
     this.getStory();
-    // check if this user already has a name, and if so skip the welcome dialog
+    
+    // if author name in local storage, pre-set the enter name dialog
     if (localStorage.getItem(LocalStorage.UserName)){
       this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
-      this.joinStory(true);
-    } else {
-      this.dialogEnterName.nativeElement.showModal();
     }
+    this.dialogEnterName.nativeElement.showModal();
   }
 }
