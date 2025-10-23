@@ -6,6 +6,13 @@
           <button (click)="returnToMenu()" class="btn w-max">No</button>
           <button (click)="disconnect()" class="btn btn-outline w-max">I'm not {{ retrievedAuthorName() }}</button>
       </div>
+      @if (showNameClash()){
+        <div class="alert alert-error">
+          Author with this name is already working on this story. Do you want to join with a different name?
+          <button (click)="joinWithNewName()">Yes</button>
+          <button (click)="returnToMenu()">Cancel</button>
+        </div>
+      }
     </div>
   </dialog>
 
