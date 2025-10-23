@@ -1,6 +1,6 @@
 <div class="pt-8"><app-title-block /></div>
 
-<div>
+<div class="flex flex-row m-auto max-w-fit gap-1">
     <input type="text" [(ngModel)]="joinByCode" minlength="6" maxlength="6" class="input bg-white" placeholder="Story code"/>
     <button (click)="handleJoinByCode()" class="btn bg-red-500 text-white">Join by Code</button>
 </div>
@@ -8,7 +8,7 @@
 <h1 class="my-2 text-xl text-red-900">Open public stories</h1>
 @for (story of retrievedStories(); track story.storyId) {
 <div (click)="handleJoinStory(story.storyId)"
-    class="flex align-middle cursor-pointer text-left my-2 bg-neutral-300 hover:bg-neutral-400">
+    class="flex flex-row text-left cursor-pointer my-2 bg-neutral-300 hover:bg-neutral-400">
     <div class="border-l-4 border-red-500 hover:border-red-300 p-3">
         <span class="uppercase border rounded-md bg-neutral-500 text-white shadow-xs shadow-black text-xs p-0.5 mr-3">
             {{ story.storyId }}
@@ -24,7 +24,7 @@
 @if (retrievedStories()!.length === 0) {
 <div>There are no currently open stories to join.</div>
 }
-<div class="flex justify-center gap-2 mt-3">
+<div class="flex flex-row m-auto w-fit gap-2 mt-3">
     <button (click)="handleRefresh($event)"
         class=" bg-neutral-100 hover:bg-neutral-200 text-black py-1 px-2 rounded-xl border-black border-1">
         Refresh list

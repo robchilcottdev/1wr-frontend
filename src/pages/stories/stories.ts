@@ -1,4 +1,5 @@
 import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit, afterEveryRender, computed, effect } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TitleBlock } from "../../components/title-block/title-block";
 import { ApiService } from '../../services/api-service';
 import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState } from '../../types';
@@ -11,7 +12,7 @@ import { AudioService } from '../../services/audio-service';
 
 @Component({
   selector: 'app-stories',
-  imports: [TitleBlock, FormsModule, AuthorListPipe, RestrictStoryword],
+  imports: [TitleBlock, FormsModule, AuthorListPipe, RestrictStoryword, RouterLink],
   templateUrl: './stories.html',
   styleUrl: './stories.css'
 })
@@ -44,7 +45,7 @@ export class Stories implements AfterViewInit {
   // COMPUTED
   protected thisAuthorIsCreator = computed(() => {
     const creator = this.retrievedStory()!.authors.find(a => a.isCreator);
-    return creator?.id === localStorage.getItem(LocalStorage.UserId);
+    return creator?.name === localStorage.getItem(LocalStorage.UserName);
   });
 
   protected creatorName = computed(() => {
@@ -54,7 +55,7 @@ export class Stories implements AfterViewInit {
   });
 
   protected isThisAuthorsTurn = computed (() => {
-    if (this.retrievedStory()!.authors.length === 0) return false;
+    if (this.retrievedStory()!.authors.length < 2) return false;
     const authorTurnIndex = this.retrievedStory()!.authorTurn;
     const currentTurnAuthor = this.retrievedStory()!.authors[authorTurnIndex];
     const thisAuthorId = localStorage.getItem(LocalStorage.UserId);
@@ -87,15 +88,16 @@ initializeSocket(){
           this.messages.set(`${message.author} joined the story.`);
           break;
         case SocketMessageType.AuthorLeft:
+        case SocketMessageType.UserDisconnected:          
           this.getStory();
           this.messages.set(`${message.author} left the story.`);
           break;
         case SocketMessageType.StateChanged:
           this.getStory();
-          break;          
+          break;
         default: // for currently unhandled socket message types
           break;
-      }  
+      }
     });
   }
 
@@ -106,20 +108,20 @@ initializeSocket(){
       this.apiService.getStory(this.storyId).subscribe({
         next: (story: Story) => {
           this.retrievedStory.set(story);
-          if (story.state != previousStoryState && story.state === StoryState.InProgress) {
+          if (story.state != previousStoryState && story.state === StoryState.InProgress && story.authors.length > 1) {
             this.messages.set(`${this.currentAuthorTurnName()}, add the next word.`);
           } 
-          if (story.authors.length < 2) this.messages.set("Awaiting minimum of two authors...");
-          if (story.authors.length >= 2 && previousAuthorCount < 2){
+          if (story.authors.length < 2) this.messages.set(this.messages() + " Waiting for 2 or more authors.");
+          if (story.authors.length >= 2 && previousAuthorCount < 2 && !this.thisAuthorIsCreator()){
             this.messages.set(`Waiting for ${this.creatorName()} to start the story.`);
           }
           
           this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
           this.stateInProgress.set(story.state === StoryState.InProgress);
+          console.log("Latest story:", story);
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
-          this.messages.set("Error retrieving story. Try reloading the page.");
         }
       });
     } else {

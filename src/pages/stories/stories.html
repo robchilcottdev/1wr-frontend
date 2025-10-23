@@ -17,7 +17,7 @@
 <div class="flex justify-center">
     <button (click)="beginStory()" [disabled]="retrievedStory()!.authors.length < 2"
         [class.bg-red-500]="retrievedStory()!.authors.length >= 2"
-        class="btn typewriter-text bg-gray-400 w-max mt-3">Begin</button>
+        class="btn typewriter-text bg-neutral-300 w-max mt-3">Begin</button>
 </div>
 }
 
@@ -36,7 +36,7 @@
     </div>
 
 
-    @if (isThisAuthorsTurn() && stateInProgress()){
+    @if (isThisAuthorsTurn() && stateInProgress() && retrievedStory()!.authors.length > 1){
     <div class="flex mt-3">
         <label class="input bg-white w-full">
             <input [(ngModel)]="wordToAdd" (keyup.enter)="addWord()" appRestrictStoryword autocapitalize="none"
@@ -47,14 +47,14 @@
     <p class="text-xs text-left text-gray-500 mt-2">Hints: start you word with <strong>\</strong> (back-slash) to begin
         a new paragraph.</p>
 
-    }@else if(retrievedStory()!.authors.length > 1) {
+    }@else if(stateInProgress() && retrievedStory()!.authors.length > 1) {
     <div class="flex mt-3 text-gray-500">
         Waiting for {{ currentAuthorTurnName() }}...
     </div>
     }
 </section>
 } @else {
-<h1>Story not found</h1>
+<h1 class="text-xl text-red-900">Story not found. Maybe you should <a routerLink="/stories/new" class="text-red-500 underline">start a new one</a>?</h1>
 }
 
 <section id="action-buttons">
