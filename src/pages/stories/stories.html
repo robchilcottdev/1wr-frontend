@@ -13,11 +13,11 @@
 </section>
 }
 
-@if (stateAwaitingAuthors() && thisAuthorIsCreator()){
+@if (stateAwaitingAuthors() && thisAuthorIsCreator() && !stateInProgress()){
 <div class="flex justify-center">
     <button (click)="beginStory()" [disabled]="retrievedStory()!.authors.length < 2"
         [class.bg-red-500]="retrievedStory()!.authors.length >= 2"
-        class="btn typewriter-text bg-neutral-300 w-max mt-3">Begin</button>
+        class="btn typewriter-text bg-neutral-300 w-max mt-3">Begin story</button>
 </div>
 }
 

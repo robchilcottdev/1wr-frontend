@@ -130,7 +130,7 @@ initializeSocket(){
           
           this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
           this.stateInProgress.set(story.state === StoryState.InProgress);
-          console.log("Latest story:", story);
+          //console.log("Latest story:", story);
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
