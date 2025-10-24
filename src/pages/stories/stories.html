@@ -9,7 +9,7 @@
 
 @if (messages()){
 <section id="messages">
-    <div class="h-max py-2 bg-red-950 text-sm text-white">{{ messages() }}</div>
+    <div class="h-max p-2 bg-red-950 text-sm text-white">{{ messages() }}</div>
 </section>
 }
 
@@ -39,12 +39,12 @@
     @if (isThisAuthorsTurn() && stateInProgress() && retrievedStory()!.authors.length > 1){
     <div class="flex mt-3">
         <label class="input bg-white w-full">
-            <input [(ngModel)]="wordToAdd" (keyup.enter)="addWord()" appRestrictStoryword autocapitalize="none"
+            <input [(ngModel)]="wordToAdd" (keyup.enter)="addWord()" appRestrictStoryword [autocapitalize]="turnOnAutoCapitalize()"
                 placeholder="Your word" class="text-gray-500 font-semibold" />
         </label>
         <button class="btn bg-black text-white rounded-r-full" (click)="addWord()">Add</button>
     </div>
-    <p class="text-xs text-left text-gray-500 mt-2">Hints: start you word with <strong>\</strong> (back-slash) to begin
+    <p class="text-xs text-left text-gray-500 px-2 mt-2">Hints: start you word with <strong>\</strong> (back-slash) to begin
         a new paragraph.</p>
 
     }@else if(stateInProgress() && retrievedStory()!.authors.length > 1) {
@@ -97,14 +97,14 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
 <dialog #dialogEnterName class="modal">
     <div class="modal-box bg-neutral-100">
         <p class="py-2">Please enter your author name.</p>
-        <input type="text" [(ngModel)]="authorName" min="3" max="10" (keyup.enter)="joinStory()" class="input bg-white w-max"
-            placeholder="Enter your name (3-10 characters)" />
+        <input type="text" [(ngModel)]="authorName" minlength="1" maxlength="10" required (keyup.enter)="joinStory()" class="input bg-white w-max"
+            placeholder="Enter your name (1-10 characters)" />
         <div class="modal-action typewriter-text">
             <button (click)="joinStory()" class="btn bg-red-500 w-max">Let's go</button>
-            <button (click)="closeEnterNameDialog()" class="btn w-max">Maybe not</button>
+            <button (click)="closeEnterNameDialog()" class="btn w-max">Cancel</button>
         </div>
         @if(showAuthorNameClashMessage()) {
-        <div class="alert alert-error mt-3">Sorry, that author name has already been taken. Please try another.</div>
+        <div class="alert alert-error mt-3">Sorry, that author name has already been taken for this story. Please try another.</div>
         }
         @if(showAuthorNameInvalid()){
         <div class="alert alert-error mt-3">Your author name must be between 3 and 10 characters.</div>
@@ -117,7 +117,7 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
         <p class="py-2">Are you sure you want to leave this story?</p>
         <div class="modal-action typewriter-text">
             <button (click)="confirmLeaveStory()" class="btn bg-red-500 w-max">Yes</button>
-            <button (click)="this.dialogLeave.nativeElement.close()" class="btn w-max">On second thoughts...</button>
+            <button (click)="this.dialogLeave.nativeElement.close()" class="btn w-max">Cancel</button>
         </div>
     </div>
 </dialog>

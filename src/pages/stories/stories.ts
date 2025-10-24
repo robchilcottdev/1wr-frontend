@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit, afterEveryRender, computed, effect } from '@angular/core';
+import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TitleBlock } from "../../components/title-block/title-block";
 import { ApiService } from '../../services/api-service';
@@ -39,7 +39,6 @@ export class Stories implements AfterViewInit {
   protected authorNameConfirmed = signal(false);
   protected stateAwaitingAuthors = signal(false);
   protected stateInProgress = signal(false);
-
   protected wordToAdd = signal("");
 
   // COMPUTED
@@ -71,6 +70,19 @@ export class Stories implements AfterViewInit {
     return currentTurnAuthor.name;
   });
 
+  protected turnOnAutoCapitalize = computed(() => {
+  if (this.retrievedStory()){
+    if (this.retrievedStory()!.words.length > 1){
+      const currentWordIndex = this.retrievedStory()!.words.length - 1;
+      const currentWord = this.retrievedStory()!.words[currentWordIndex];
+      if(currentWord.word.endsWith(".")){
+        return true;
+      }
+    }
+  }
+  return false;
+});
+
 initializeSocket(){
     const socket: WebSocket = this.socketService.socket;
     socket.addEventListener("message", (event: any) => {
@@ -101,7 +113,7 @@ initializeSocket(){
     });
   }
 
-  getStory() {
+  async getStory() {
     const previousStoryState = this.retrievedStory()?.state ?? StoryState.AwaitingAuthors;
     const previousAuthorCount = this.retrievedStory()?.authors?.length ?? 0;
     if (this.storyId) {
@@ -122,6 +134,7 @@ initializeSocket(){
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
+          this.dialogEnterName.nativeElement.close();
         }
       });
     } else {
@@ -134,6 +147,11 @@ initializeSocket(){
 
     if(this.retrievedStory()!.authors.some(a => a.name === this.authorName())){
       this.showAuthorNameClashMessage.set(true);
+      return;
+    }
+
+    if(this.authorName().length < 1 || this.authorName().length > 10){
+      this.showAuthorNameInvalid.set(true);
       return;
     }
 
@@ -234,9 +252,6 @@ initializeSocket(){
   constructor() {
     this.initializeSocket();
     this.messages.set("");
-
-    afterEveryRender(() => {
-    });
   }
 
   ngAfterViewInit(): void {
@@ -246,6 +261,6 @@ initializeSocket(){
     if (localStorage.getItem(LocalStorage.UserName)){
       this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
     }
-    this.dialogEnterName.nativeElement.showModal();
+      this.dialogEnterName.nativeElement.showModal();    
   }
 }

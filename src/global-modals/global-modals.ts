@@ -1,5 +1,5 @@
 import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { LocalStorage, Story } from '../types';
 import { ApiService } from '../services/api-service';
 
@@ -10,6 +10,7 @@ import { ApiService } from '../services/api-service';
 })
 export class GlobalModals {
   protected readonly router = inject(Router);
+  protected readonly activatedRoute = inject(ActivatedRoute);
   protected readonly apiService = inject(ApiService);
   
   protected retrievedStoryTitle = signal("");
@@ -17,7 +18,6 @@ export class GlobalModals {
   protected retrievedStory = signal<Story | undefined>(undefined);
   protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
-  protected showNameClash = signal(false);
   
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
   @ViewChild('dialogStoryNotFound') dialogStoryNotFound!: ElementRef;
@@ -28,12 +28,16 @@ export class GlobalModals {
     this.retrievedAuthorName.set(localStorage.getItem(LocalStorage.UserName)!);
     this.retrievedStoryId.set(localStorage.getItem(LocalStorage.CurrentStoryId)!);
 
-    if (this.retrievedStoryId() && this.retrievedAuthorName()) {
+    if (this.retrievedStoryId()) {
       this.apiService.getStory(this.retrievedStoryId()).subscribe({
         next: (story: Story) => {
-          this.retrievedStory.set(story);
-          this.retrievedStoryTitle.set(story.title);
-          this.continueStory();
+          if (!location.href.includes("stories/")){
+            this.retrievedStory.set(story);
+            this.retrievedStoryTitle.set(story.title);
+            this.dialogContinueStory.nativeElement.showModal();
+          } else {
+            this.router.navigateByUrl("/stories/" + localStorage.getItem(LocalStorage.CurrentStoryId));
+          }
         },
         error: () => {
           this.openStoryNotFoundDialog();
@@ -51,19 +55,10 @@ export class GlobalModals {
   closeContinueStoryDialog() { this.dialogContinueStory.nativeElement.close(); }
 
   continueStory() {
+    localStorage.removeItem(LocalStorage.UserName);
     this.dialogContinueStory.nativeElement.showModal();
-    if (this.retrievedStory()!.authors.some(a => a.name === this.retrievedAuthorName())){
-      this.showNameClash.set(true);
-      return;
-    }
     this.closeContinueStoryDialog();
     this.router.navigateByUrl("/stories/" + localStorage.getItem(LocalStorage.CurrentStoryId));
-  }
-
-  joinWithNewName() {
-    localStorage.removeItem(LocalStorage.UserName);
-    this.retrievedAuthorName.set("");
-    this.continueStory();
   }
 
   returnToMenu() {
@@ -74,7 +69,6 @@ export class GlobalModals {
   }
 
   disconnect() {
-    console.log("reached disconnect with retrievedStoryId:", this.retrievedStoryId());
     if (this.retrievedStoryId()){
       this.removeAuthorFromStoryByName(this.retrievedStoryId(), this.retrievedAuthorName());
 0    }
