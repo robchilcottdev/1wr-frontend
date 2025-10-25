@@ -5,7 +5,10 @@ export enum SocketMessageType {
   AuthorLeft = 'author_left',
   StoryDeleted = 'story_deleted',
   WordAdded = 'word_added',
-  StateChanged = 'state_changed'
+  StateChanged = 'state_changed',
+  VoteStarted = 'vote_started',
+  VoteMade = 'vote_made',
+  VoteEnded = "vote_ended"
 }
 
 export type User = {
@@ -43,9 +46,10 @@ export type Author = {
 
 export type VoteDetails = {
   voteIsActive: boolean;
-  voteProposedBy?: Author | null;
+  voteProposedBy?: string;
+  previousVoteProposedBy?: string;
   voteType?: VoteType | null;
-  votes?: Map<Author, boolean> | null;
+  votes?: Array<{ authorName: string, vote: boolean }> | null;
 }
 
 export enum VoteType {
@@ -57,6 +61,15 @@ export enum VotingScheme {
   Unilateral,
   Majority,
   Unanimous  
+}
+
+export type DisplayedVote = {
+  authorName: string,
+  voteForDisplay: boolean | null
+}
+
+export enum UserErrors {
+  MultipleConsecutiveVotes
 }
 
 export enum LocalStorage {

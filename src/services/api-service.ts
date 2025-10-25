@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { User, Story, Author, VoteDetails, LocalStorage, StoryState } from '../types';
+import { User, Story, Author, VoteDetails, LocalStorage, StoryState, VoteType } from '../types';
 import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 
@@ -23,6 +23,10 @@ export class ApiService {
     return this.http.get<Story[]>(`${this.baseUrl}/stories`);
   }
 
+  getCompletedStories(): Observable<Story[]> {
+    return this.http.get<Story[]>(`${this.baseUrl}/stories/completed`);
+  }
+
   addWord(storyId: string, word: string, authorName: string): Observable<Story> {
      return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/addword`, { word: word, authorName: authorName});
   }
@@ -37,6 +41,18 @@ export class ApiService {
 
   updateStoryState(storyId: string, state: StoryState){
      return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/state`, { state });
+  }
+
+  proposeVote(storyId: string, voteType: VoteType, authorName: string){
+     return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/vote/propose`, { voteType, authorName });
+  }
+
+  makeVote(storyId: string, vote: boolean, authorName: string){
+     return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/vote/decide`, { vote, authorName });
+  }
+
+  concludeVote(storyId: string, voteCarried: boolean){
+     return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/vote/conclude`, { voteCarried });
   }
 
   resetAll(){
