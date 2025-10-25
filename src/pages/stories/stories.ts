@@ -93,10 +93,13 @@ export class Stories implements AfterViewInit {
   });
 
   protected voteType = computed(() => {
-    if (this.retrievedStory()?.voteDetails?.voteType === VoteType.EditWord) {
+    const voteType = this.retrievedStory()?.voteDetails?.voteType;
+    if (voteType === VoteType.EditWord) {
       return "edit the last word";
-    } else {
+    } else if (voteType === VoteType.EndStory) {
       return "end the story";
+    } else {
+      return "voteType unspecified";
     }
   });
 
@@ -119,7 +122,7 @@ export class Stories implements AfterViewInit {
     const socket: WebSocket = this.socketService.socket;
     socket.addEventListener("message", (event: any) => {
       const message = JSON.parse(event.data);
-      //console.info(`${new Date().toUTCString()} - Socket message received: ${message.type}`)
+      console.info(`${new Date().toUTCString()} - Socket message received: ${message.type} | ${JSON.stringify(message)}`);
       switch (message.type) {
         case SocketMessageType.WordAdded:
           this.messages.set(`${message.author} added '${message.word.replace("\\", "")}' to the story. 
@@ -132,8 +135,10 @@ export class Stories implements AfterViewInit {
         case SocketMessageType.UserDisconnected:
           this.messages.set(`${message.author} left the story.`);
           break;
+        case SocketMessageType.StateChanged:
+        case SocketMessageType.VoteStarted:
+        case SocketMessageType.VoteMade:
         case SocketMessageType.VoteEnded:
-          console.log("Socket message received for vote ended");
           break;
         default: // all other voting message types, i.e. anything that doesn't need a separate message
           break;
@@ -163,24 +168,24 @@ export class Stories implements AfterViewInit {
             this.messages.set(`${this.currentAuthorTurnName()}, add the next word.`);
           }
           if (story.authors.length < 2) this.messages.set(this.messages() + " Waiting for 2 or more authors.");
-          
+
           if (story.authors.length >= 2 && previousAuthorCount < 2 && !this.thisAuthorIsCreator()) {
-            if (this.stateInProgress()){
+            if (this.stateInProgress()) {
               this.messages.set(`Waiting for ${this.creatorName()} to continue the story.`)
             } else {
               this.messages.set(`Waiting for ${this.creatorName()} to start the story.`)
             }
           }
-          // handle voting
-          if (story.voteDetails?.voteIsActive) {
-            this.processVote(story);
-          }
-
           // play typewriter sound for new word - could add scribble for word deletes?
           if (previousWordCount && previousWordCount < story.words.length) {
             this.audioService.playSound(AudioFile.TypewriterKeystroke);
           }
           console.log("Latest story:", story);
+
+          // handle voting
+          if (story.voteDetails?.voteIsActive) {
+            this.processVote(story);
+          }
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
@@ -294,7 +299,7 @@ export class Stories implements AfterViewInit {
   }
 
   voteToEnd() {
-    this.apiService.proposeVote(this.storyId!, VoteType.EndStory, this.authorName()).subscribe({      
+    this.apiService.proposeVote(this.storyId!, VoteType.EndStory, this.authorName()).subscribe({
       error: (err) => {
         console.log("Error:", err);
         this.messages.set("Error starting vote");
@@ -356,25 +361,24 @@ export class Stories implements AfterViewInit {
 
   // show the vote outcome and carry out necessary action
   resetVotes(voteType: VoteType, voteCarried: boolean) {
-    this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
-      next: (_) => {
-        console.log("Response received from conclude vote api call");
-        if(voteType === VoteType.EndStory && voteCarried){
-          // TODO: persist story to data layer
-          localStorage.removeItem(LocalStorage.CurrentStoryId);
-          window.location.href = "/";
-        }
-      },
-      error: (err) => {
-        console.log("Error concluding vote:", err);
-        this.messages.set("There was an error resetting the vote.");
-      }
-    });
-    
     setTimeout(() => {
-      this.dialogVote.nativeElement.close();      
-      this.voteSummary.set([]);
-      this.voteOutcome.set("");
+      this.dialogVote.nativeElement.close();
+      this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
+        next: (_) => {
+          this.voteSummary.set([]);
+          this.voteOutcome.set("");
+
+          if (voteType === VoteType.EndStory && voteCarried) {
+            // TODO: persist story to data layer
+            localStorage.removeItem(LocalStorage.CurrentStoryId);
+            window.location.href = "/";
+          }
+        },
+        error: (err) => {
+          console.log("Error concluding vote:", err);
+          this.messages.set("There was an error resetting the vote.");
+        }
+      });
     }, 2000);
   }
 
