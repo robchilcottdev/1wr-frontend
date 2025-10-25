@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { SocketService } from '../../services/socket-service';
 import { RestrictStoryword } from "../../core/restrict-storyword-directive";
 import { AudioService } from '../../services/audio-service';
+import { Home } from '../home/home';
 
 @Component({
   selector: 'app-stories',
@@ -375,7 +376,7 @@ export class Stories implements AfterViewInit {
           if (voteType === VoteType.EndStory && voteCarried) {
             // TODO: persist story to data layer
             localStorage.removeItem(LocalStorage.CurrentStoryId);
-            window.location.href = "/";
+            this.router.navigateByUrl('/');
           }
         },
         error: (err) => {
