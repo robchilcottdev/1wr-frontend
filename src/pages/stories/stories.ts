@@ -127,24 +127,27 @@ export class Stories implements AfterViewInit {
       switch (message.type) {
         case SocketMessageType.WordAdded:
           this.messages.set(`${message.author} added '${message.word.replace("\\", "")}' to the story. 
-            ${message.nextAuthor}, it's your turn.`);
+          ${message.nextAuthor}, it's your turn.`);
+          this.getStory();
           break;
         case SocketMessageType.AuthorJoined:
+          this.getStory();          
           this.messages.set(`${message.author} joined the story.`);
           break;
         case SocketMessageType.AuthorLeft:
         case SocketMessageType.UserDisconnected:
+          this.getStory();          
           this.messages.set(`${message.author} left the story.`);
           break;
         case SocketMessageType.StateChanged:
         case SocketMessageType.VoteStarted:
         case SocketMessageType.VoteMade:
         case SocketMessageType.VoteEnded:
+          this.getStory();
           break;
         default: // all other voting message types, i.e. anything that doesn't need a separate message
           break;
       }
-      this.getStory();
     });
   }
 
@@ -152,13 +155,15 @@ export class Stories implements AfterViewInit {
   // Triggered on initial component load, then after every message from
   // the websocket server
   async getStory() {
-    if (this.storyId) {
+    const storyId = localStorage.getItem(LocalStorage.CurrentStoryId) ?? this.storyId;
+    if (storyId) {
       const previousStoryState = this.retrievedStory()?.state ?? StoryState.AwaitingAuthors;
       const previousAuthorCount = this.retrievedStory()?.authors?.length ?? 0;
       const previousWordCount = this.retrievedStory()?.words.length ?? 0;
 
-      this.apiService.getStory(this.storyId).subscribe({
+      this.apiService.getStory(storyId).subscribe({
         next: (story: Story) => {
+          console.log("Story returned by getStory:", story);
           this.retrievedStory.set(story);
           // TODO: possibly make these computed
           this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
@@ -213,7 +218,6 @@ export class Stories implements AfterViewInit {
 
     this.apiService.joinStory(this.storyId!, authorId, this.authorName()).subscribe({
       next: (story: Story) => {
-        this.retrievedStory.set(story);
         this.authorNameConfirmed.set(true);
       },
       error: (err) => {
@@ -285,7 +289,6 @@ export class Stories implements AfterViewInit {
     }
     this.apiService.addWord(this.storyId!, this.wordToAdd(), this.authorName()).subscribe({
       next: (story: Story) => {
-        this.retrievedStory.set(story);
         // TODO: flash the latest word somehow?
       },
       error: (err) => {
@@ -367,9 +370,6 @@ export class Stories implements AfterViewInit {
       this.dialogVote.nativeElement.close();
       this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
         next: (story: Story) => {
-          this.retrievedStory.set(story);
-
-          console.log("Latest story from resetVotes:", story);
           this.voteSummary.set([]);
           this.voteOutcome.set("");
 
