@@ -2,7 +2,7 @@ import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit, comput
 import { RouterLink } from '@angular/router';
 import { TitleBlock } from "../../components/title-block/title-block";
 import { ApiService } from '../../services/api-service';
-import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState, VoteType, DisplayedVote, VotingScheme } from '../../types';
+import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState, VoteType, DisplayedVote, VotingScheme, UserErrors } from '../../types';
 import { AuthorListPipe } from '../../core/author-list-pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -158,8 +158,7 @@ export class Stories implements AfterViewInit {
 
       this.apiService.getStory(this.storyId).subscribe({
         next: (story: Story) => {
-          this.retrievedStory.set(story); // since this is set following any websocket message, no need to update it from the api calls directly
-
+          this.retrievedStory.set(story);
           // TODO: possibly make these computed
           this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
           this.stateInProgress.set(story.state === StoryState.InProgress);
@@ -180,8 +179,7 @@ export class Stories implements AfterViewInit {
           if (previousWordCount && previousWordCount < story.words.length) {
             this.audioService.playSound(AudioFile.TypewriterKeystroke);
           }
-          console.log("Latest story:", story);
-
+          
           // handle voting
           if (story.voteDetails?.voteIsActive) {
             this.processVote(story);
@@ -214,7 +212,7 @@ export class Stories implements AfterViewInit {
 
     this.apiService.joinStory(this.storyId!, authorId, this.authorName()).subscribe({
       next: (story: Story) => {
-        //this.retrievedStory.set(story);
+        this.retrievedStory.set(story);
         this.authorNameConfirmed.set(true);
       },
       error: (err) => {
@@ -286,7 +284,7 @@ export class Stories implements AfterViewInit {
     }
     this.apiService.addWord(this.storyId!, this.wordToAdd(), this.authorName()).subscribe({
       next: (story: Story) => {
-        //this.retrievedStory.set(story);
+        this.retrievedStory.set(story);
         // TODO: flash the latest word somehow?
       },
       error: (err) => {
@@ -299,9 +297,12 @@ export class Stories implements AfterViewInit {
   }
 
   voteToEnd() {
-    this.apiService.proposeVote(this.storyId!, VoteType.EndStory, this.authorName()).subscribe({
+    if (this.authorName() === this.retrievedStory()!.voteDetails?.previousVoteProposedBy){
+      this.messages.set("Multiple consecutive votes from the same author are not allowed.");
+      return;
+    }
+    this.apiService.proposeVote(this.storyId!, VoteType.EndStory, this.authorName()).subscribe({    
       error: (err) => {
-        console.log("Error:", err);
         this.messages.set("Error starting vote");
       }
     });
@@ -364,7 +365,10 @@ export class Stories implements AfterViewInit {
     setTimeout(() => {
       this.dialogVote.nativeElement.close();
       this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
-        next: (_) => {
+        next: (story: Story) => {
+          this.retrievedStory.set(story);
+
+          console.log("Latest story from resetVotes:", story);
           this.voteSummary.set([]);
           this.voteOutcome.set("");
 

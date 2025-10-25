@@ -52,7 +52,6 @@ export class ApiService {
   }
 
   concludeVote(storyId: string, voteCarried: boolean){
-    console.log("Reached concludeVote in api-service");
      return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/vote/conclude`, { voteCarried });
   }
 
