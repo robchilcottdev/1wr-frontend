@@ -361,12 +361,10 @@ export class Stories implements AfterViewInit {
         this.concludeVote(voteType, true);
       } else if (noVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The authors chose not to " + this.voteType());
-        this.concludeVote(voteType, false);
-      } else if (yesVotes + noVotes > (eligibleVoters / 2)) {
-        this.voteOutcome.set("The majority could not agree to " + this.voteType());
-        this.concludeVote(voteType, false);
+        this.concludeVote(voteType, false);    
       } else {
-        this.voteOutcome.set("Further votes are required to determine a majority");
+        this.voteOutcome.set("Waiting for votes...");
+        this.concludeVote(voteType, false);
       }
     }
   }
