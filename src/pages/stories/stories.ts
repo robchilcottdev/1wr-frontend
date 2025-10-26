@@ -9,7 +9,6 @@ import { FormsModule } from '@angular/forms';
 import { SocketService } from '../../services/socket-service';
 import { RestrictStoryword } from "../../core/restrict-storyword-directive";
 import { AudioService } from '../../services/audio-service';
-import { Home } from '../home/home';
 
 @Component({
   selector: 'app-stories',
@@ -45,6 +44,7 @@ export class Stories implements AfterViewInit {
 
   protected voteSummary = signal<Array<DisplayedVote> | null>(null);
   protected voteOutcome = signal("");
+  protected storyEnded = signal(false);
 
   //#region computed signals
   protected thisAuthorIsCreator = computed(() => {
@@ -126,6 +126,7 @@ export class Stories implements AfterViewInit {
       console.info(`${new Date().toUTCString()} - Socket message received: ${message.type} | ${JSON.stringify(message)}`);
       switch (message.type) {
         case SocketMessageType.WordAdded:
+          this.audioService.playSound(AudioFile.TypewriterKeystroke);
           this.messages.set(`${message.author} added '${message.word.replace("\\", "")}' to the story. 
           ${message.nextAuthor}, it's your turn.`);
           this.getStory();
@@ -169,6 +170,14 @@ export class Stories implements AfterViewInit {
           this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
           this.stateInProgress.set(story.state === StoryState.InProgress);
 
+          if (story.state != previousStoryState && story.state === StoryState.Completed) {
+            // TODO: persist story to data layer
+            this.storyEnded.set(true);
+            this.stateInProgress.set(false);
+            this.messages.set("Thanks for writing!");
+            localStorage.removeItem(LocalStorage.CurrentStoryId);
+          }
+
           if (story.state != previousStoryState && this.stateInProgress() && story.authors.length > 1) {
             this.messages.set(`${this.currentAuthorTurnName()}, add the next word.`);
           }
@@ -181,11 +190,7 @@ export class Stories implements AfterViewInit {
               this.messages.set(`Waiting for ${this.creatorName()} to start the story.`)
             }
           }
-          // play typewriter sound for new word - could add scribble for word deletes?
-          if (previousWordCount && previousWordCount < story.words.length) {
-            this.audioService.playSound(AudioFile.TypewriterKeystroke);
-          }
-          
+
           // handle voting
           if (story.voteDetails?.voteIsActive) {
             this.processVote(story);
@@ -351,13 +356,13 @@ export class Stories implements AfterViewInit {
       if (yesVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The authors agreed to " + this.voteType());
         // either scrap last word or end story here
-        this.resetVotes(voteType, true);
+        this.concludeVote(voteType, true);
       } else if (noVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The authors chose not to " + this.voteType());
-        this.resetVotes(voteType, false);
+        this.concludeVote(voteType, false);
       } else if (yesVotes + noVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The majority could not agree to " + this.voteType());
-        this.resetVotes(voteType, false);
+        this.concludeVote(voteType, false);
       } else {
         this.voteOutcome.set("Further votes are required to determine a majority");
       }
@@ -365,26 +370,19 @@ export class Stories implements AfterViewInit {
   }
 
   // show the vote outcome and carry out necessary action
-  resetVotes(voteType: VoteType, voteCarried: boolean) {
-    setTimeout(() => {
-      this.dialogVote.nativeElement.close();
-      this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
-        next: (story: Story) => {
-          this.voteSummary.set([]);
-          this.voteOutcome.set("");
+  concludeVote(voteType: VoteType, voteCarried: boolean) {
+    this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
+      error: (err) => {
+        console.log("Error concluding vote:", err);
+        this.messages.set("There was an error resetting the vote.");
+      }
+    });
+  }
 
-          if (voteType === VoteType.EndStory && voteCarried) {
-            // TODO: persist story to data layer
-            localStorage.removeItem(LocalStorage.CurrentStoryId);
-            this.router.navigateByUrl('/');
-          }
-        },
-        error: (err) => {
-          console.log("Error concluding vote:", err);
-          this.messages.set("There was an error resetting the vote.");
-        }
-      });
-    }, 2000);
+  closeVoteDialog(){
+    this.dialogVote.nativeElement.close()
+    this.voteSummary.set([]);
+    this.voteOutcome.set("");
   }
 
   constructor() {

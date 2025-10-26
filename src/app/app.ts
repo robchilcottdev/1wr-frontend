@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ApiService } from '../services/api-service';
 import { SocketService } from '../services/socket-service';

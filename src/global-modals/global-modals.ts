@@ -1,7 +1,8 @@
-import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, signal, ViewChild, afterEveryRender } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LocalStorage, Story } from '../types';
 import { ApiService } from '../services/api-service';
+import { SocketService } from '../services/socket-service';
 
 @Component({
   selector: 'app-global-modals',
@@ -12,15 +13,19 @@ export class GlobalModals {
   protected readonly router = inject(Router);
   protected readonly activatedRoute = inject(ActivatedRoute);
   protected readonly apiService = inject(ApiService);
-  
+  protected readonly socketService = inject(SocketService);
+
   protected retrievedStoryTitle = signal("");
   protected retrievedStoryId = signal("");
   protected retrievedStory = signal<Story | undefined>(undefined);
   protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
-  
+
+  protected socketHasDisconnected = signal(false);
+
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
   @ViewChild('dialogStoryNotFound') dialogStoryNotFound!: ElementRef;
+  @ViewChild('dialogNotConnected') dialogNotConnected!: ElementRef;
   
   constructor() {
     // check local storage for current player, current story
@@ -44,6 +49,28 @@ export class GlobalModals {
         }
       });
     }
+
+    afterEveryRender(() => {
+      if(this.socketService.socket.readyState > 2){
+        this.dialogNotConnected.nativeElement.showModal();
+      }
+    });
+  }
+
+  // killConnection(){
+  //   console.log("Closing socket connection");
+  //   this.socketService.socket.close();
+  // }
+
+  // getReadyState(){
+  //   console.log("ReadyState:", this.socketService.socket.readyState);
+  // }
+
+  reconnect(){
+    console.log("reached reconnect with readyState:", this.socketService.socket.readyState);
+    this.socketService.reconnect();
+
+    this.dialogNotConnected.nativeElement.close();
   }
 
   openStoryNotFoundDialog(){ this.dialogStoryNotFound.nativeElement.showModal(); }

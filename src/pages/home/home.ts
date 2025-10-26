@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TitleBlock } from '../../components/title-block/title-block';
 import { ApiService } from '../../services/api-service';
+import { SocketService } from '../../services/socket-service';
 
 @Component({
   selector: 'app-home',
@@ -14,8 +15,7 @@ export class Home {
 
   resetAll(){
     this.apiService.resetAll().subscribe({
-      next: (data) => {
-        console.log("Data:", data);
+      next: (_) => {
         alert("All stories reset");
       },
       error: (err) => {

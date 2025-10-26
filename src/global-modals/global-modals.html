@@ -1,3 +1,17 @@
+<div class="float-right pt-2 z-50 text-sm font-mono text-red-950">
+  @if (socketService.socket.readyState > 2){
+    <div class="inline-grid *:[grid-area:1/1]">
+    <div class="status status-error animate-ping"></div>
+    <div class="status status-error"></div>
+    </div> disconnected
+  }@else {
+    <div aria-label="success" class="status status-success"></div> connected
+  } 
+</div>
+
+<!-- <button class="btn btn-primary" (click)="killConnection()">Kill connection</button>
+<button class="btn btn-secondary" (click)="getReadyState()">Get readyState</button> -->
+  
   <dialog #dialogContinueStory class="modal">
     <div class="modal-box bg-neutral-100">
       <p class="py-2">You have a story, '{{ retrievedStoryTitle() }}', in progress. Do you want to continue?</p>
@@ -13,6 +27,15 @@
       <p class="py-2">The story you had in progress is no longer available.</p>
       <div class="modal-action typewriter-text">
         <button (click)="closeStoryNotFoundDialog()" class="btn w-max">OK</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog #dialogNotConnected class="modal">
+        <div class="modal-box bg-neutral-100">
+      <p class="py-2">You have been disconnected from the server. Click OK to reconnect.</p>
+      <div class="modal-action typewriter-text">
+        <button (click)="reconnect()" class="btn w-max">OK</button>
       </div>
     </div>
   </dialog>
