@@ -143,6 +143,8 @@ export class Stories implements AfterViewInit {
         case SocketMessageType.StateChanged:
         case SocketMessageType.VoteStarted:
         case SocketMessageType.VoteMade:
+          this.getStory();
+          break;
         case SocketMessageType.VoteEnded:
           this.getStory();
           break;

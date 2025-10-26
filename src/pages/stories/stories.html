@@ -129,8 +129,9 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
 
 <dialog #dialogVote class="modal">
     <div class="modal-box bg-neutral-100">
-        <p class="py-2">{{ voteProposedBy() }} votes to {{ voteType() }}</p>
-
+        @if(voteProposedBy()){
+            <p class="py-2">{{ voteProposedBy() }} votes to {{ voteType() }}</p>
+        }
         <!-- show voting buttons if you haven't voted yet -->
         @if (!hasVoted()){
         <div class="modal-action typewriter-text flex justify-between">
