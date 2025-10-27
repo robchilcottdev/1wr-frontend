@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-read',
-  imports: [TitleBlock, ActionBar, FormsModule],
+  imports: [TitleBlock, ActionBar, FormsModule, AuthorListPipe],
   templateUrl: './read.html',
   styleUrl: './read.css'
 })

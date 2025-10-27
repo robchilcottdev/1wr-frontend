@@ -340,19 +340,18 @@ export class Stories implements AfterViewInit {
       if (yesVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The authors agreed to " + this.voteType());
         // either scrap last word or end story here
-        this.concludeVote(voteType, true);
+        this.concludeVote(true);
       } else if (noVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The authors chose not to " + this.voteType());
-        this.concludeVote(voteType, false);    
+        this.concludeVote(false);    
       } else {
         this.voteOutcome.set("Waiting for votes...");
-        this.concludeVote(voteType, false);
       }
     }
   }
 
   // show the vote outcome and carry out necessary action
-  concludeVote(voteType: VoteType, voteCarried: boolean) {
+  concludeVote(voteCarried: boolean) {
     this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
       error: (err) => {
         console.log("Error concluding vote:", err);
