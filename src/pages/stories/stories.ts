@@ -76,21 +76,14 @@ export class Stories implements AfterViewInit {
     return currentTurnAuthor.name;
   });
 
-  protected turnOnAutoCapitalize = computed(() => {
-    if (this.retrievedStory()) {
-      if (this.retrievedStory()!.words.length > 1) {
-        const currentWordIndex = this.retrievedStory()!.words.length - 1;
-        const currentWord = this.retrievedStory()!.words[currentWordIndex];
-        if (currentWord.word.endsWith(".")) {
-          return true;
-        }
-      }
-    }
-    return false;
-  });
-
   protected voteProposedBy = computed(() => {
     return this.retrievedStory()?.voteDetails?.voteProposedBy ?? "";
+  });
+
+  protected voteIsActive = computed(() => { return this.retrievedStory()?.voteDetails?.voteIsActive });
+
+  protected hasVoted = computed(() => {
+    return this.retrievedStory()?.voteDetails?.votes?.some(v => v.authorName === this.authorName());
   });
 
   protected voteType = computed(() => {
@@ -102,17 +95,6 @@ export class Stories implements AfterViewInit {
     } else {
       return "voteType unspecified";
     }
-  });
-
-  // toggle visibility of voting buttons
-  protected hasVoted = computed(() => {
-    if (!this.retrievedStory()?.voteDetails?.voteIsActive) return true; // hides voting buttons when the vote is concluded
-    if (this.retrievedStory()?.voteDetails?.voteIsActive) {
-      if (this.retrievedStory()?.voteDetails?.votes?.some(v => v.authorName === this.authorName())) {
-        return true;
-      }
-    }
-    return false;
   });
 
   //#endregion
