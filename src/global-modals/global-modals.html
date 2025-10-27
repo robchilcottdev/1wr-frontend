@@ -33,9 +33,15 @@
 
   <dialog #dialogNotConnected class="modal">
         <div class="modal-box bg-neutral-100">
-      <p class="py-2">You have been disconnected from the server. Click OK to reconnect.</p>
+      <p class="py-2">Connecting to server <span class="loading loading-spinner loading-sm"></span></p>
+    </div>
+  </dialog>
+
+     <dialog #dialogUnableToConnect class="modal">
+    <div class="modal-box bg-neutral-100">
+      <p class="py-2">Unable to reach server. Please try again later.</p>
       <div class="modal-action typewriter-text">
-        <button (click)="reconnect()" class="btn w-max">OK</button>
+        <button (click)="this.dialogUnableToConnect.nativeElement.close()" class="btn w-max">OK</button>
       </div>
     </div>
   </dialog>

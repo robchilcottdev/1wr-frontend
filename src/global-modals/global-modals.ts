@@ -21,11 +21,12 @@ export class GlobalModals {
   protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
 
-  protected socketHasDisconnected = signal(false);
+  protected unableToConnect = signal(false);
 
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
   @ViewChild('dialogStoryNotFound') dialogStoryNotFound!: ElementRef;
   @ViewChild('dialogNotConnected') dialogNotConnected!: ElementRef;
+  @ViewChild('dialogUnableToConnect') dialogUnableToConnect!: ElementRef;
   
   constructor() {
     // check local storage for current player, current story
@@ -50,27 +51,40 @@ export class GlobalModals {
       });
     }
 
+    // throw Not Connected dialog whenever web socket connection drops
     afterEveryRender(() => {
-      if(this.socketService.socket.readyState > 2){
-        this.dialogNotConnected.nativeElement.showModal();
+      if(this.socketService.socket.readyState != 1 && !this.unableToConnect()){
+        this.connect();
       }
     });
   }
 
-  // killConnection(){
-  //   console.log("Closing socket connection");
-  //   this.socketService.socket.close();
-  // }
+  connect(){
+    this.dialogNotConnected.nativeElement.showModal();
+    console.log("Initial this.socketService.socket.readyState:", this.socketService.socket.readyState);
 
-  // getReadyState(){
-  //   console.log("ReadyState:", this.socketService.socket.readyState);
-  // }
+    this.socketService.connect();
 
-  reconnect(){
-    console.log("reached reconnect with readyState:", this.socketService.socket.readyState);
-    this.socketService.reconnect();
+    let attempts = 0;
+    let intervalId = setInterval(() => {
+      console.log("this.socketService.socket.readyState:", this.socketService.socket.readyState);
+      if (this.socketService.socket.readyState === 1) this.handleReconnected(intervalId);
+      if (attempts === 10) this.handleUnableToConnect(intervalId);      
+      attempts++;
+    }, 1000);
+  }
 
+  handleReconnected(intervalId: number){
+    clearInterval(intervalId);
+    this.unableToConnect.set(false);
     this.dialogNotConnected.nativeElement.close();
+  }
+
+  handleUnableToConnect(intervalId: number){
+    this.unableToConnect.set(true);
+    clearInterval(intervalId);
+    this.dialogNotConnected.nativeElement.close();
+    this.dialogUnableToConnect.nativeElement.showModal();
   }
 
   openStoryNotFoundDialog(){ this.dialogStoryNotFound.nativeElement.showModal(); }

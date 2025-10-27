@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { SocketMessageType } from '../types';
 import { environment } from '../environments/environment';
 @Injectable({
@@ -22,7 +22,8 @@ export class SocketService {
     });
   }
 
-  reconnect(){
+  connect(){      
+    console.log("reached connect");
       this.socket = new WebSocket(environment.webSocketUrl);
   }
 }
