@@ -19,7 +19,9 @@
 
 <dialog #dialogNotConnected class="modal">
       <div class="modal-box bg-neutral-100">
-    <p class="py-2">Connecting to server <span class="loading loading-spinner loading-sm"></span></p>
+    <p class="py-2">
+      Connecting to server...</p>
+      <progress class="progress progress-error w-56" [value]="connectionCountdown()" [max]="connectionCountdownMax()"></progress>
   </div>
 </dialog>
 

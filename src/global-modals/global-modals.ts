@@ -21,6 +21,7 @@ export class GlobalModals {
   protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
 
+  protected connectionCountdownMax = signal<number>(60);
   protected connectionCountdown = signal<number>(60);
   protected unableToConnect = signal(false);
 
@@ -64,10 +65,12 @@ export class GlobalModals {
     this.dialogNotConnected.nativeElement.showModal();
     this.socketService.connect();
 
+    let t = this.connectionCountdown();
     let intervalId = setInterval(() => {
       if (this.socketService.socket.readyState === 1) this.handleConnectionSuccessful(intervalId);
-      if (this.connectionCountdown() === 0) this.handleConnectionFailed(intervalId);      
-      this.connectionCountdown.update((n) => n--);  
+      if (this.connectionCountdown() <= 0) this.handleConnectionFailed(intervalId);
+      t--;
+      this.connectionCountdown.set(t);      
     }, 1000);
   }
 
