@@ -21,6 +21,7 @@ export class GlobalModals {
   protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
 
+  protected connectionCountdown = signal<number>(60);
   protected unableToConnect = signal(false);
 
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
@@ -61,26 +62,22 @@ export class GlobalModals {
 
   connect(){
     this.dialogNotConnected.nativeElement.showModal();
-    console.log("Initial this.socketService.socket.readyState:", this.socketService.socket.readyState);
-
     this.socketService.connect();
 
-    let attempts = 0;
     let intervalId = setInterval(() => {
-      console.log("this.socketService.socket.readyState:", this.socketService.socket.readyState);
-      if (this.socketService.socket.readyState === 1) this.handleReconnected(intervalId);
-      if (attempts === 10) this.handleUnableToConnect(intervalId);      
-      attempts++;
+      if (this.socketService.socket.readyState === 1) this.handleConnectionSuccessful(intervalId);
+      if (this.connectionCountdown() === 0) this.handleConnectionFailed(intervalId);      
+      this.connectionCountdown.update((n) => n--);  
     }, 1000);
   }
 
-  handleReconnected(intervalId: number){
+  handleConnectionSuccessful(intervalId: number){
     clearInterval(intervalId);
     this.unableToConnect.set(false);
     this.dialogNotConnected.nativeElement.close();
   }
 
-  handleUnableToConnect(intervalId: number){
+  handleConnectionFailed(intervalId: number){
     this.unableToConnect.set(true);
     clearInterval(intervalId);
     this.dialogNotConnected.nativeElement.close();
