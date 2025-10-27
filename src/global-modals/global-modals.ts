@@ -21,8 +21,8 @@ export class GlobalModals {
   protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
 
-  protected connectionCountdownMax = signal<number>(60);
-  protected connectionCountdown = signal<number>(60);
+  protected connectionCountdownMax = signal<number>(10);
+  protected connectionCountdown = signal<number>(10);
   protected unableToConnect = signal(false);
 
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
@@ -85,6 +85,11 @@ export class GlobalModals {
     clearInterval(intervalId);
     this.dialogNotConnected.nativeElement.close();
     this.dialogUnableToConnect.nativeElement.showModal();
+  }
+
+  reload(){
+    this.dialogUnableToConnect.nativeElement.close();
+    window.location.reload();
   }
 
   openStoryNotFoundDialog(){ this.dialogStoryNotFound.nativeElement.showModal(); }

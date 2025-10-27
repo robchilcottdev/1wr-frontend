@@ -27,9 +27,9 @@
 
     <dialog #dialogUnableToConnect class="modal">
   <div class="modal-box bg-neutral-100">
-    <p class="py-2">Unable to reach server. Please try again later.</p>
+    <p class="py-2">Unable to reach server. Click OK to reload.</p>
     <div class="modal-action typewriter-text">
-      <button (click)="this.dialogUnableToConnect.nativeElement.close()" class="btn w-max">OK</button>
+      <button (click)="reload()" class="btn w-max">OK</button>
     </div>
   </div>
 </dialog>
