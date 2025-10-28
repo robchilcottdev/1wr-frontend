@@ -21,6 +21,10 @@
         "@schematics/angular:directive": {
           "skipTests": true,
           "path": "src/core"
+        },
+        "@schematics/angular:guard": {
+          "skipTests": true,
+          "path": "src/core"
         }
       },
       "root": "",

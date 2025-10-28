@@ -40,8 +40,6 @@ export class Stories implements AfterViewInit {
   public messages = signal("");
   protected showAuthorNameClashMessage = signal(false);
   protected showAuthorNameInvalid = signal(false);
-  protected stateAwaitingAuthors = signal(false);
-  protected stateInProgress = signal(false);
   protected wordToAdd = signal("");
 
   protected voteSummary = signal<Array<DisplayedVote> | null>(null);
@@ -49,6 +47,7 @@ export class Stories implements AfterViewInit {
   protected storyEnded = signal(false);
 
   protected errorDialogText = signal("");
+  protected allowNavigateAway = signal(false);
   //#endregion
 
   //#region computed signals
@@ -81,6 +80,9 @@ export class Stories implements AfterViewInit {
     return currentTurnAuthor.name;
   });
 
+  protected stateAwaitingAuthors = computed(() => this.retrievedStory()?.state === StoryState.AwaitingAuthors) ?? StoryState.AwaitingAuthors;
+  protected stateInProgress = computed(() => this.retrievedStory()?.state === StoryState.InProgress) ?? StoryState.AwaitingAuthors;
+
   protected voteProposedBy = computed(() => {
     return this.retrievedStory()?.voteDetails?.voteProposedBy ?? "";
   });
@@ -106,6 +108,7 @@ export class Stories implements AfterViewInit {
 
   // handles raising messages for the ui from the websocket server,
   // then gets the updated story
+  // #region sockets
   initializeSocket() {
     const socket: WebSocket = this.socketService.socket;
     socket.addEventListener("message", (event: any) => {
@@ -138,6 +141,7 @@ export class Stories implements AfterViewInit {
       }
     });
   }
+  // #endregion
 
   // Retrieves the latest data for the story and acts on any changes.
   // Triggered on initial component load, then after every message from
@@ -154,6 +158,7 @@ export class Stories implements AfterViewInit {
           this.retrievedStory.set(story);
           
           if (!this.authorNameConfirmed()){
+            console.log("authorNameCnfirmed:", this.authorNameConfirmed());
             // if author name in local storage, pre-populate the enter name dialog
             if (localStorage.getItem(LocalStorage.UserName)) {
               this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
@@ -161,14 +166,9 @@ export class Stories implements AfterViewInit {
             this.dialogEnterName.nativeElement.showModal();
           }
 
-          // TODO: possibly make these computed
-          this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
-          this.stateInProgress.set(story.state === StoryState.InProgress);
-
           if (story.state != previousStoryState && story.state === StoryState.Completed) {
             // TODO: persist story to data layer
             this.storyEnded.set(true);
-            this.stateInProgress.set(false);
             this.messages.set("Thanks for writing!");
             localStorage.removeItem(LocalStorage.CurrentStoryId);
           }
@@ -228,9 +228,17 @@ export class Stories implements AfterViewInit {
     this.router.navigateByUrl("/");
   }
 
+  // guard applied only to this route to disable back button, but allow programmatic navigation
+  canDeactivate(): boolean {
+    if(this.allowNavigateAway()) return true;
+    this.leave();
+    return false;
+  }
+
   leave() {
     if (!this.retrievedStory() || this.retrievedStory()!.state === StoryState.Completed) {
       // no story, or story is over - straight home you go
+      this.allowNavigateAway.set(true);      
       this.router.navigateByUrl("/");
     }
 
@@ -245,6 +253,7 @@ export class Stories implements AfterViewInit {
     this.apiService.leaveStory(storyId, authorName).subscribe({
       next: (story: Story) => {
         this.dialogLeave.nativeElement.close();
+        this.allowNavigateAway.set(true);        
         this.router.navigateByUrl("/");
       },
       error: (err) => {

@@ -17,7 +17,6 @@ export class App {
   protected readonly socketService = inject(SocketService);
 
   protected authorName = localStorage.getItem(LocalStorage.UserName) ?? "unknown author";
-
   killConnection(){
     this.socketService.socket.close();
   }

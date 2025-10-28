@@ -1,14 +1,14 @@
-<div id="connection-status" class="p-2 float-right z-50 text-red-900 font-mono text-sm">
+<div id="connection-status" class="flex justify-end items-center gap-1 p-2 z-50 text-red-900 font-mono text-sm">
   @if(socketService.isConnected()){
     <div aria-label="success" class="status status-success"></div>
-    connected as {{ authorName }}
+    <div>connected as {{ authorName }}</div>
   }@else {
     <div class="inline-grid *:[grid-area:1/1]">
   <div class="status status-error animate-ping"></div>
   <div class="status status-error"></div>
 </div> disconnected
   }
-  (<a (click)="killConnection()" class="underline cursor-pointer text-red-500 text-xs">terminate</a>)
+  <a (click)="killConnection()" class="underline cursor-pointer text-red-500 text-xs">terminate</a>
 </div>
 
 <section class="container mx-auto text-center font-mono text-gray-800">
