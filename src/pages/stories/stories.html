@@ -75,7 +75,7 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
             </a>
 
             @if (stateInProgress() && !storyEnded()){
-            <a type="button" class="cursor-pointer hover:text-neutral-300">
+            <a type="button" (click)="voteToEdit()" class="cursor-pointer hover:text-neutral-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"

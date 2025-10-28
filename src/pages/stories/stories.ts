@@ -116,7 +116,6 @@ export class Stories implements AfterViewInit {
       console.info(`${new Date().toUTCString()} - Socket message received: ${message.type} | ${JSON.stringify(message)}`);
       switch (message.type) {
         case SocketMessageType.WordAdded:
-          this.audioService.playSound(AudioFile.TypewriterKeystroke);
           this.messages.set(`${message.author} added '${message.word.replace("\\", "")}' to the story. 
           ${message.nextAuthor}, it's your turn.`);
           this.getStory();
@@ -150,7 +149,6 @@ export class Stories implements AfterViewInit {
     const storyId = localStorage.getItem(LocalStorage.CurrentStoryId) ?? this.storyId;
     if (storyId) {
       const previousStoryState = this.retrievedStory()?.state ?? StoryState.AwaitingAuthors;
-      const previousAuthorCount = this.retrievedStory()?.authors?.length ?? 0;
 
       this.apiService.getStory(storyId).subscribe({
         next: (story: Story) => {
@@ -158,7 +156,6 @@ export class Stories implements AfterViewInit {
           this.retrievedStory.set(story);
           
           if (!this.authorNameConfirmed()){
-            console.log("authorNameCnfirmed:", this.authorNameConfirmed());
             // if author name in local storage, pre-populate the enter name dialog
             if (localStorage.getItem(LocalStorage.UserName)) {
               this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
@@ -309,6 +306,19 @@ export class Stories implements AfterViewInit {
       return;
     }
     this.apiService.proposeVote(this.storyId!, VoteType.EndStory, this.authorName()).subscribe({    
+      error: (err) => {
+        this.messages.set("Error starting vote");
+      }
+    });
+  }
+
+  voteToEdit() {
+    if (this.authorName() === this.retrievedStory()!.voteDetails?.previousVoteProposedBy){
+      this.errorDialogText.set("Multiple consecutive votes are not allowed. Give someone else a chance!");
+      this.dialogError.nativeElement.showModal();
+      return;
+    }
+    this.apiService.proposeVote(this.storyId!, VoteType.EditWord, this.authorName()).subscribe({    
       error: (err) => {
         this.messages.set("Error starting vote");
       }
