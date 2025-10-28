@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, signal, ViewChild, afterEveryRender } from '@angular/core';
+import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LocalStorage, Story } from '../types';
 import { ApiService } from '../services/api-service';
@@ -9,7 +9,7 @@ import { SocketService } from '../services/socket-service';
   imports: [],
   templateUrl: './global-modals.html'
 })
-export class GlobalModals {
+export class GlobalModals implements AfterViewInit {
   protected readonly router = inject(Router);
   protected readonly activatedRoute = inject(ActivatedRoute);
   protected readonly apiService = inject(ApiService);
@@ -23,7 +23,7 @@ export class GlobalModals {
 
   protected connectionCountdownMax = signal<number>(10);
   protected connectionCountdown = signal<number>(10);
-  protected unableToConnect = signal(false);
+  //protected unableToConnect = signal(false);
 
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
   @ViewChild('dialogStoryNotFound') dialogStoryNotFound!: ElementRef;
@@ -52,12 +52,12 @@ export class GlobalModals {
         }
       });
     }
+  }
 
-    // throw Not Connected dialog whenever web socket connection drops
-    afterEveryRender(() => {
-      if(this.socketService.socket.readyState != 1 && !this.unableToConnect()){
-        this.connect();
-      }
+  ngAfterViewInit(): void {
+    this.connect();
+    this.socketService.socket.addEventListener("close", () => {
+      this.connect();
     });
   }
 
@@ -65,6 +65,7 @@ export class GlobalModals {
     this.dialogNotConnected.nativeElement.showModal();
     this.socketService.connect();
 
+    // every second, check to see if the socket is connected - if so, dismiss the holding dialog
     let t = this.connectionCountdown();
     let intervalId = setInterval(() => {
       if (this.socketService.socket.readyState === 1) this.handleConnectionSuccessful(intervalId);
@@ -76,20 +77,15 @@ export class GlobalModals {
 
   handleConnectionSuccessful(intervalId: number){
     clearInterval(intervalId);
-    this.unableToConnect.set(false);
+    //this.unableToConnect.set(false);
     this.dialogNotConnected.nativeElement.close();
   }
 
   handleConnectionFailed(intervalId: number){
-    this.unableToConnect.set(true);
+    //this.unableToConnect.set(true);
     clearInterval(intervalId);
     this.dialogNotConnected.nativeElement.close();
     this.dialogUnableToConnect.nativeElement.showModal();
-  }
-
-  reload(){
-    this.dialogUnableToConnect.nativeElement.close();
-    window.location.reload();
   }
 
   openStoryNotFoundDialog(){ this.dialogStoryNotFound.nativeElement.showModal(); }
@@ -135,3 +131,7 @@ export class GlobalModals {
     });
   }
 }
+function afterViewInit() {
+  throw new Error('Function not implemented.');
+}
+

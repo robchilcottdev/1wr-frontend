@@ -1,3 +1,14 @@
+<div class="float-right pt-2 z-50 text-sm font-mono text-red-950">
+  @if (socketService.socket.readyState != 1){
+    <div class="inline-grid *:[grid-area:1/1]">
+    <div class="status status-error animate-ping"></div>
+    <div class="status status-error"></div>
+    </div> disconnected
+  }@else {
+    <div aria-label="success" class="status status-success"></div> connected
+  } 
+</div>
+
 <dialog #dialogContinueStory class="modal">
   <div class="modal-box bg-neutral-100">
     <p class="py-2">You have a story, '{{ retrievedStoryTitle() }}', in progress. Do you want to continue?</p>
@@ -27,9 +38,9 @@
 
     <dialog #dialogUnableToConnect class="modal">
   <div class="modal-box bg-neutral-100">
-    <p class="py-2">Unable to reach server. Click OK to reload.</p>
+    <p class="py-2">Unable to reach server. Please try again later.</p>
     <div class="modal-action typewriter-text">
-      <button (click)="reload()" class="btn w-max">OK</button>
+      <button (click)="this.dialogUnableToConnect.nativeElement.close();" class="btn w-max">OK</button>
     </div>
   </div>
 </dialog>
