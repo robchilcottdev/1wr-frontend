@@ -1,7 +1,7 @@
 <div id="connection-status" class="p-2 float-right z-50 text-red-900 font-mono text-sm">
   @if(socketService.isConnected()){
     <div aria-label="success" class="status status-success"></div>
-    connected
+    connected as {{ authorName }}
   }@else {
     <div class="inline-grid *:[grid-area:1/1]">
   <div class="status status-error animate-ping"></div>

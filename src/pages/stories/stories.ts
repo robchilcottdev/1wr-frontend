@@ -21,6 +21,7 @@ export class Stories implements AfterViewInit {
   @ViewChild('dialogEnterName') dialogEnterName!: ElementRef;
   @ViewChild('dialogLeave') dialogLeave!: ElementRef;
   @ViewChild('dialogVote') dialogVote!: ElementRef;
+  @ViewChild('dialogError') dialogError!: ElementRef;
   @ViewChild('storyBodyText') storyBodyText!: ElementRef;
 
   protected readonly router = inject(Router);
@@ -45,6 +46,8 @@ export class Stories implements AfterViewInit {
   protected voteSummary = signal<Array<DisplayedVote> | null>(null);
   protected voteOutcome = signal("");
   protected storyEnded = signal(false);
+
+  protected errorDialogText = signal("");
 
   //#region computed signals
   protected thisAuthorIsCreator = computed(() => {
@@ -150,6 +153,15 @@ export class Stories implements AfterViewInit {
         next: (story: Story) => {
           console.log("Story returned by getStory:", story);
           this.retrievedStory.set(story);
+          
+          if (!this.authorNameConfirmed()){
+            // if author name in local storage, pre-populate the enter name dialog
+            if (localStorage.getItem(LocalStorage.UserName)) {
+              this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
+            }
+            this.dialogEnterName.nativeElement.showModal();
+          }
+
           // TODO: possibly make these computed
           this.stateAwaitingAuthors.set(story.state === StoryState.AwaitingAuthors);
           this.stateInProgress.set(story.state === StoryState.InProgress);
@@ -226,11 +238,12 @@ export class Stories implements AfterViewInit {
   }
 
   leave() {
-    if (!this.retrievedStory()) {
-      // no story - home you go
+    if (!this.retrievedStory() || this.retrievedStory()!.state === StoryState.Completed) {
+      // no story, or story is over - straight home you go
       this.router.navigateByUrl("/");
     }
 
+    // are you really sure you want to leave?
     this.dialogLeave.nativeElement.showModal();
   }
 
@@ -291,7 +304,8 @@ export class Stories implements AfterViewInit {
 
   voteToEnd() {
     if (this.authorName() === this.retrievedStory()!.voteDetails?.previousVoteProposedBy){
-      this.messages.set("Multiple consecutive votes from the same author are not allowed.");
+      this.errorDialogText.set("Multiple consecutive votes are not allowed. Give someone else a chance!");
+      this.dialogError.nativeElement.showModal();
       return;
     }
     this.apiService.proposeVote(this.storyId!, VoteType.EndStory, this.authorName()).subscribe({    
@@ -338,14 +352,12 @@ export class Stories implements AfterViewInit {
     // for now, voting scheme is always Majority
     if (this.retrievedStory()!.votingScheme === VotingScheme.Majority) {
       if (yesVotes > (eligibleVoters / 2)) {
-        this.voteOutcome.set("The authors agreed to " + this.voteType());
+        this.voteOutcome.set("The majority agreed to " + this.voteType());
         // either scrap last word or end story here
         this.concludeVote(true);
       } else if (noVotes > (eligibleVoters / 2)) {
-        this.voteOutcome.set("The authors chose not to " + this.voteType());
+        this.voteOutcome.set("The majority chose not to " + this.voteType());
         this.concludeVote(false);    
-      } else {
-        this.voteOutcome.set("Waiting for votes...");
       }
     }
   }
@@ -373,11 +385,5 @@ export class Stories implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.getStory();
-
-    // if author name in local storage, pre-populate the enter name dialog
-    if (localStorage.getItem(LocalStorage.UserName)) {
-      this.authorName.set(localStorage.getItem(LocalStorage.UserName)!);
-    }
-    this.dialogEnterName.nativeElement.showModal();
   }
 }
