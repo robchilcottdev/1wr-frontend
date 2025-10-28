@@ -24,6 +24,7 @@ export class Stories implements AfterViewInit {
   @ViewChild('dialogError') dialogError!: ElementRef;
   @ViewChild('storyBodyText') storyBodyText!: ElementRef;
 
+  // #region variables
   protected readonly router = inject(Router);
   protected readonly route = inject(ActivatedRoute);
   protected readonly apiService = inject(ApiService);
@@ -48,6 +49,7 @@ export class Stories implements AfterViewInit {
   protected storyEnded = signal(false);
 
   protected errorDialogText = signal("");
+  //#endregion
 
   //#region computed signals
   protected thisAuthorIsCreator = computed(() => {
@@ -128,12 +130,10 @@ export class Stories implements AfterViewInit {
         case SocketMessageType.StateChanged:
         case SocketMessageType.VoteStarted:
         case SocketMessageType.VoteMade:
-          this.getStory();
-          break;
         case SocketMessageType.VoteEnded:
           this.getStory();
           break;
-        default: // all other voting message types, i.e. anything that doesn't need a separate message
+        default:
           break;
       }
     });
@@ -147,7 +147,6 @@ export class Stories implements AfterViewInit {
     if (storyId) {
       const previousStoryState = this.retrievedStory()?.state ?? StoryState.AwaitingAuthors;
       const previousAuthorCount = this.retrievedStory()?.authors?.length ?? 0;
-      const previousWordCount = this.retrievedStory()?.words.length ?? 0;
 
       this.apiService.getStory(storyId).subscribe({
         next: (story: Story) => {
@@ -175,17 +174,9 @@ export class Stories implements AfterViewInit {
           }
 
           if (story.state != previousStoryState && this.stateInProgress() && story.authors.length > 1) {
-            this.messages.set(`${this.currentAuthorTurnName()}, add the next word.`);
+            this.messages.set(`${this.currentAuthorTurnName()}, it's your turn.`);
           }
           if (story.authors.length < 2) this.messages.set(this.messages() + " Waiting for 2 or more authors.");
-
-          if (story.authors.length >= 2 && previousAuthorCount < 2 && !this.thisAuthorIsCreator()) {
-            if (this.stateInProgress()) {
-              this.messages.set(`Waiting for ${this.creatorName()} to continue the story.`)
-            } else {
-              this.messages.set(`Waiting for ${this.creatorName()} to start the story.`)
-            }
-          }
 
           // handle voting
           if (story.voteDetails?.voteIsActive) {
@@ -353,16 +344,19 @@ export class Stories implements AfterViewInit {
     if (this.retrievedStory()!.votingScheme === VotingScheme.Majority) {
       if (yesVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The majority agreed to " + this.voteType());
-        // either scrap last word or end story here
         this.concludeVote(true);
       } else if (noVotes > (eligibleVoters / 2)) {
         this.voteOutcome.set("The majority chose not to " + this.voteType());
         this.concludeVote(false);    
+      } else if (yesVotes + noVotes === eligibleVoters){
+        // everyone has voted, and still no resolution
+        this.voteOutcome.set("A majority has not agreed to " + this.voteType());
+        this.concludeVote(false);
       }
     }
   }
 
-  // show the vote outcome and carry out necessary action
+  // show the vote outcome - the consequence of the vote is handled by getStory, triggered by socket message
   concludeVote(voteCarried: boolean) {
     this.apiService.concludeVote(this.storyId!, voteCarried).subscribe({
       error: (err) => {
