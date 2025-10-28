@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, input, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LocalStorage, Story } from '../types';
 import { ApiService } from '../services/api-service';
@@ -9,7 +9,7 @@ import { SocketService } from '../services/socket-service';
   imports: [],
   templateUrl: './global-modals.html'
 })
-export class GlobalModals implements AfterViewInit {
+export class GlobalModals {
   protected readonly router = inject(Router);
   protected readonly activatedRoute = inject(ActivatedRoute);
   protected readonly apiService = inject(ApiService);
@@ -21,14 +21,11 @@ export class GlobalModals implements AfterViewInit {
   protected retrievedAuthorId = signal("");
   protected retrievedAuthorName = signal("");
 
-  protected connectionCountdownMax = signal<number>(10);
-  protected connectionCountdown = signal<number>(10);
-  //protected unableToConnect = signal(false);
+  connectionCountdownMax = input<number>(0);
+  connectionCountdown = input<number>(0);
 
   @ViewChild('dialogContinueStory') dialogContinueStory!: ElementRef;
   @ViewChild('dialogStoryNotFound') dialogStoryNotFound!: ElementRef;
-  @ViewChild('dialogNotConnected') dialogNotConnected!: ElementRef;
-  @ViewChild('dialogUnableToConnect') dialogUnableToConnect!: ElementRef;
   
   constructor() {
     // check local storage for current player, current story
@@ -52,40 +49,6 @@ export class GlobalModals implements AfterViewInit {
         }
       });
     }
-  }
-
-  ngAfterViewInit(): void {
-    this.connect();
-    this.socketService.socket.addEventListener("close", () => {
-      this.connect();
-    });
-  }
-
-  connect(){
-    this.dialogNotConnected.nativeElement.showModal();
-    this.socketService.connect();
-
-    // every second, check to see if the socket is connected - if so, dismiss the holding dialog
-    let t = this.connectionCountdown();
-    let intervalId = setInterval(() => {
-      if (this.socketService.socket.readyState === 1) this.handleConnectionSuccessful(intervalId);
-      if (this.connectionCountdown() <= 0) this.handleConnectionFailed(intervalId);
-      t--;
-      this.connectionCountdown.set(t);      
-    }, 1000);
-  }
-
-  handleConnectionSuccessful(intervalId: number){
-    clearInterval(intervalId);
-    //this.unableToConnect.set(false);
-    this.dialogNotConnected.nativeElement.close();
-  }
-
-  handleConnectionFailed(intervalId: number){
-    //this.unableToConnect.set(true);
-    clearInterval(intervalId);
-    this.dialogNotConnected.nativeElement.close();
-    this.dialogUnableToConnect.nativeElement.showModal();
   }
 
   openStoryNotFoundDialog(){ this.dialogStoryNotFound.nativeElement.showModal(); }
@@ -130,8 +93,5 @@ export class GlobalModals implements AfterViewInit {
       }
     });
   }
-}
-function afterViewInit() {
-  throw new Error('Function not implemented.');
 }
 

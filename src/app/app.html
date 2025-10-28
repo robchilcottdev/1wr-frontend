@@ -1,5 +1,5 @@
 <div id="connection-status" class="p-2 float-right z-50 text-red-900 font-mono text-sm">
-  <!-- @if(isConnected()){
+  @if(socketService.isConnected()){
     <div aria-label="success" class="status status-success"></div>
     connected
   }@else {
@@ -7,10 +7,15 @@
   <div class="status status-error animate-ping"></div>
   <div class="status status-error"></div>
 </div> disconnected
-  } -->
+  }
+  (<a (click)="killConnection()" class="underline cursor-pointer text-red-500 text-xs">terminate</a>)
 </div>
 
 <section class="container mx-auto text-center font-mono text-gray-800">
-  <app-global-modals/>
-  <router-outlet />
+  @if(socketService.isConnected()){
+    <router-outlet />
+  }@else {
+    <app-connecting />
+  }
 </section>
+<app-global-modals />
