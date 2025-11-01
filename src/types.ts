@@ -8,7 +8,9 @@ export enum SocketMessageType {
   StateChanged = 'state_changed',
   VoteStarted = 'vote_started',
   VoteMade = 'vote_made',
-  VoteEnded = "vote_ended"
+  VoteEnded = "vote_ended",
+  ClientVoteOutcome = "client_vote_outcome",
+  ClientVoteOutcomeMessage = "client_vote_outcome_message"
 }
 
 export type User = {
@@ -19,12 +21,21 @@ export type User = {
 export type Story = {
   storyId: string;
   title: string;
+  genre: string;
+  wordLimit: number;
   authors: Author[];
   state: StoryState;
   words: StoryWord[];
   authorTurn: number;
   votingScheme?: VotingScheme;
   voteDetails?: VoteDetails;
+}
+
+export type NewStoryDto = {
+  title: string,
+  genre: string,
+  openingText?: string,
+  wordLimit: number
 }
 
 export type StoryWord = {

@@ -4,6 +4,7 @@
 @for (story of retrievedStories(); track story.storyId) {
 <div class="px-6 py-2">
     <h2 class="text-lg font-bold text-left mt-3">{{ story.title }} </h2>
+    <h3 class="font-bold text-left text-gray-600">A {{ story.genre }} story of {{ story.words.length }} words</h3>
     <!-- <h3 class="text-lg font-light">{{ story.authors | authorList}}</h3> -->
     <div #storyBodyText class="typewriter-text text-left mt-2">
         @for (storyWord of story!.words; track $index) {

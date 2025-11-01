@@ -1,18 +1,72 @@
 <div class="pt-8"><app-title-block /></div>
 
-<input #inputTitle type="text" [(ngModel)]="storyTitle" minlength="3" maxlength="50" (keyup.enter)="handleBeginStory($event)" placeholder="Story title (3-50 characters)"
-    class="input bg-neutral-100 border border-black" />
+<form [formGroup]="newStoryForm" (ngSubmit)="handleBeginStory()">
+  <div class="flex flex-col gap-6 w-[95%] m-auto">      
+    <div class="flex justify-center text-sm"><button type="button" class="btn btn-sm" (click)="randomizer($event)">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+</svg>
+      Randomize
+  </button></div>
 
-<div class="flex flex-col justify-center m-auto w-max gap-2 mt-6">
-    <a type="button" href="#" (click)="handleBeginStory($event)"
-        class="typewriter-text bg-red-500 hover:bg-red-300 text-white py-1 px-2 rounded-xl border-black border">
-        Begin
-    </a>
-</div>
+    <label class="floating-label">
+      <input #inputTitle type="text" formControlName="storyTitle" required placeholder="Story title (3-50 characters)"
+        class="input bg-neutral-100 border border-black w-full" />
+      <span class="bg-white text-black">Story title (3-50 characters)</span>
+    </label>
+
+    <label class="floating-label">
+      <input type="number" required min="50" max="500" formControlName="wordLimit"
+        placeholder="Word limit (50-500 words)" class="input bg-neutral-100 border border-black w-full" />
+      <span class="bg-white text-black">Word limit (50-500 words)</span>
+    </label>
+    @if(!wordLimit?.valid && (wordLimit?.dirty || wordLimit?.touched)){
+    <div role="alert" class="alert alert-error">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Word limit must be between 50 and 500 words</span>
+    </div>
+    }
+
+    <label class="floating-label">
+      <select formControlName="genre" class="select bg-neutral-100 border border-black w-full">
+        @for (genre of this.genres; track genre) {
+        <option [value]="genre">{{genre}}</option>
+        }
+      </select>
+      <span class="bg-white text-black">Genre</span>
+    </label>
+
+      <label class="floating-label">
+        <input #inputTitle type="text" formControlName="openingText" placeholder="Opening text (optional)"
+          class="input bg-neutral-100 border border-black w-full" />
+        <span class="bg-white text-black">Opening text (optional)</span>
+      </label>
+
+    </div>
+
+
+  
+  <div class="flex flex-col justify-center m-auto w-max gap-2 mt-6">
+    <button type="submit" class="typewriter-text btn             
+                bg-red-500
+                disabled:bg-neutral-400
+                hover:bg-red-300
+                text-white
+                py-1 px-2 rounded-xl
+                border-black border" [disabled]="!newStoryForm.valid">
+      Begin
+    </button>
+  </div>
+</form>
+
 @if(alertMessage()){
-    <div role="alert" class="alert alert-error mt-6">
+<div role="alert" class="alert alert-error mt-6">
   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
   <span>{{ alertMessage() }}</span>
 </div>

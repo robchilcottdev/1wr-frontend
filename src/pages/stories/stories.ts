@@ -2,7 +2,7 @@ import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit, comput
 import { RouterLink } from '@angular/router';
 import { TitleBlock } from "../../components/title-block/title-block";
 import { ApiService } from '../../services/api-service';
-import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState, VoteType, DisplayedVote, VotingScheme, UserErrors } from '../../types';
+import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState, VoteType, DisplayedVote, VotingScheme } from '../../types';
 import { AuthorListPipe } from '../../core/author-list-pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -31,8 +31,8 @@ export class Stories implements AfterViewInit {
   protected readonly socketService = inject(SocketService);
   protected readonly audioService = inject(AudioService);
 
-  // storyId taken from url
-  protected storyId = localStorage.getItem(LocalStorage.CurrentStoryId);
+  protected storyId = localStorage.getItem(LocalStorage.CurrentStoryId) ??
+                      this.route.snapshot.paramMap.get("id");
 
   protected retrievedStory = signal<Story | null>(null);
   protected authorName = signal(""); // this author's name, entered upon joining the story
@@ -78,6 +78,10 @@ export class Stories implements AfterViewInit {
     const currentTurnAuthor = this.retrievedStory()!.authors[authorTurnIndex];
 
     return currentTurnAuthor.name;
+  });
+
+  protected wordLimitReached = computed(() => {
+    return this.retrievedStory()?.words.length === this.retrievedStory()?.wordLimit;
   });
 
   protected stateAwaitingAuthors = computed(() => this.retrievedStory()?.state === StoryState.AwaitingAuthors) ?? StoryState.AwaitingAuthors;
@@ -135,6 +139,9 @@ export class Stories implements AfterViewInit {
         case SocketMessageType.VoteEnded:
           this.getStory();
           break;
+        case SocketMessageType.ClientVoteOutcomeMessage:
+          this.voteOutcome.set(message.data);
+          break;
         default:
           break;
       }
@@ -176,9 +183,7 @@ export class Stories implements AfterViewInit {
           if (story.authors.length < 2) this.messages.set(this.messages() + " Waiting for 2 or more authors.");
 
           // handle voting
-          if (story.voteDetails?.voteIsActive) {
-            this.processVote(story);
-          }
+          if (this.voteIsActive()) this.processVote(story);          
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
@@ -335,7 +340,6 @@ export class Stories implements AfterViewInit {
 
   processVote(story: Story): void {
     // populate and show the voting dialog
-    const voteType = story.voteDetails!.voteType!;
     let voteSummary: Array<DisplayedVote> = [];
 
     // build list of those who've voted so far
@@ -351,6 +355,7 @@ export class Stories implements AfterViewInit {
     });
 
     this.voteSummary.set(voteSummary);
+
     this.dialogVote.nativeElement.showModal();
 
     // resolve / administer voting state
@@ -362,17 +367,25 @@ export class Stories implements AfterViewInit {
     // for now, voting scheme is always Majority
     if (this.retrievedStory()!.votingScheme === VotingScheme.Majority) {
       if (yesVotes > (eligibleVoters / 2)) {
-        this.voteOutcome.set("The majority agreed to " + this.voteType());
-        this.concludeVote(true);
+        this.broadcastVoteOutcome("The majority agreed to " + this.voteType());        
+        this.concludeVote(true);        
       } else if (noVotes > (eligibleVoters / 2)) {
-        this.voteOutcome.set("The majority chose not to " + this.voteType());
+        this.broadcastVoteOutcome("The majority chose not to " + this.voteType());
         this.concludeVote(false);    
       } else if (yesVotes + noVotes === eligibleVoters){
         // everyone has voted, and still no resolution
-        this.voteOutcome.set("A majority has not agreed to " + this.voteType());
+        this.broadcastVoteOutcome("A majority has not agreed to " + this.voteType());
         this.concludeVote(false);
       }
     }
+  }
+
+  broadcastVoteOutcome(message: string){
+    this.socketService.socket.send(JSON.stringify({ 
+      type: SocketMessageType.ClientVoteOutcome,
+      storyId: this.storyId,
+      message: message
+    }));
   }
 
   // show the vote outcome - the consequence of the vote is handled by getStory, triggered by socket message
@@ -397,6 +410,7 @@ export class Stories implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+
     this.getStory();
   }
 }

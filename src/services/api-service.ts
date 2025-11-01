@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { User, Story, Author, VoteDetails, LocalStorage, StoryState, VoteType } from '../types';
+import { User, Story, Author, VoteDetails, LocalStorage, StoryState, VoteType, NewStoryDto } from '../types';
 import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 
@@ -11,8 +11,8 @@ export class ApiService {
   protected readonly http = inject(HttpClient);
   protected readonly baseUrl = environment.apiUrl;
 
-  addStory(title: string) : Observable<Story> {    
-    return this.http.post<Story> (`${this.baseUrl}/story/add`, { authorId: localStorage.getItem(LocalStorage.UserId)!, title });
+  addStory(newStoryDto: NewStoryDto) : Observable<Story> {    
+    return this.http.post<Story> (`${this.baseUrl}/story/add`, newStoryDto);
   }
 
   getStory(storyId: string): Observable<Story> {

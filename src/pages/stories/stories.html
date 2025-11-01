@@ -4,7 +4,13 @@
 
 <section id="title-block" class="bg-white text-black shadow-neutral-400 shadow-sm p-2">
     <h1 class="text-xl font-bold">{{ retrievedStory()!.title }}</h1>
-    <h2 class="font-semibold">a story by {{ retrievedStory()!.authors! | authorList}}</h2>
+    <h2 class="font-semibold">a {{ retrievedStory()!.genre! }} story by {{ retrievedStory()!.authors! | authorList}}
+    </h2>
+    @if(stateInProgress() || stateAwaitingAuthors()){
+        <h3 class="text-sm">of {{ retrievedStory()!.wordLimit }} words or fewer</h3>
+    }@else {
+        <h3 class="text-sm">of {{ retrievedStory()!.words.length }} words</h3>
+    }
 </section>
 
 @if (messages()){
@@ -20,14 +26,14 @@
         class="btn typewriter-text bg-neutral-300 w-max mt-3">Begin story</button>
 </div>
 }@else if(stateAwaitingAuthors() && !storyEnded() && retrievedStory()!.authors.length > 0){
-    <div class="alert alert-info">Waiting for {{ creatorName() }} to begin the story</div>
+<div class="alert alert-info">Waiting for {{ creatorName() }} to begin the story</div>
 }
 
 <!-- need to calculate max playfield height based on viewpoint height, accounting for actionbar -->
 <section id="playfield" [class.bg-amber-50]="isThisAuthorsTurn()" [class.bg-neutral-300]="!isThisAuthorsTurn()"
     [class.bg-neutral-100]="storyEnded()" class="w-full h-80 overflow-y-scroll mt-3 p-3 typewriter-text">
 
-    <div #storyBodyText class="text-lg text-left">
+    <div #storyBodyText class="text-left align-middle text-lg">
         @for (storyWord of retrievedStory()!.words; track $index) {
         @if (storyWord.word.startsWith("\\")){
         <br /><br />{{ storyWord.word.slice(1, storyWord.word.length) }}&nbsp;
@@ -35,24 +41,34 @@
         {{ storyWord.word }}&nbsp;
         }
         }
+        @if (stateInProgress()){
+        <div class="badge badge-info w-fit h-fit text-center ml-2 p-1" [class.bg-black]="wordLimitReached()"
+            [class.text-white]="wordLimitReached()">
+            <span class="text-sm font-bold">{{ retrievedStory()!.words.length }}/{{ retrievedStory()!.wordLimit }}</span>
+            <span class="text-xs">words</span>
+        </div>
+        }
     </div>
-
-
-    @if (isThisAuthorsTurn() && stateInProgress() && retrievedStory()!.authors.length > 1){
-    <div class="flex mt-3">
-        <label class="input bg-white w-full">
-            <input [(ngModel)]="wordToAdd" (keyup.enter)="addWord()" appRestrictStoryword autocapitalize="none"
-                placeholder="Your word" class="text-gray-500 font-semibold" />
-        </label>
-        <button class="btn bg-black text-white rounded-r-full" (click)="addWord()">Add</button>
+        @if (isThisAuthorsTurn()
+        && stateInProgress()
+        && retrievedStory()!.authors.length > 1
+        && retrievedStory()!.words.length < retrievedStory()!.wordLimit){
+        <div class="flex flex-row mt-3">
+            <label class="input bg-white w-full">
+                <input [(ngModel)]="wordToAdd" (keyup.enter)="addWord()" appRestrictStoryword autocapitalize="none"
+                    placeholder="Your word" class="text-gray-500 font-semibold" />
+            </label>
+            <button class="btn bg-black text-white rounded-r-full" (click)="addWord()">Add</button>
     </div>
-    <p class="text-xs text-left text-gray-500 px-2 mt-2">Hints: start you word with <strong>\</strong> (back-slash) to
-        begin
-        a new paragraph.</p>
+    <p class="text-xs text-left text-gray-500 px-2 mt-2">Hints: start your word with \ (back-slash) to begin a new paragraph.</p>
 
     }@else if(stateInProgress() && retrievedStory()!.authors.length > 1) {
-    <div class="flex mt-3 text-gray-500">
+    <div class="mt-3 text-gray-500 text-left">
+        @if(!wordLimitReached()){
         Waiting for {{ currentAuthorTurnName() }}...
+        }@else {
+        You've reached the word limit! Time for someone to either edit the last word, or end the story...
+        }
     </div>
     }
 </section>
@@ -74,7 +90,10 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
                 <div class="flex justify-center uppercase text-xs">leave</div>
             </a>
 
-            @if (stateInProgress() && !storyEnded()){
+            @if (stateInProgress()
+                    && !storyEnded()
+                    && retrievedStory() != undefined
+                    && retrievedStory()!.words.length > 0){
             <a type="button" (click)="voteToEdit()" class="cursor-pointer hover:text-neutral-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
@@ -84,8 +103,7 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
 
                 <div class="flex justify-center uppercase text-xs">edit</div>
             </a>
-
-            @if (stateInProgress()){
+            
             <a type="button" (click)="voteToEnd()" class="cursor-pointer hover:text-neutral-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
@@ -95,8 +113,7 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
 
                 <div class="flex justify-center uppercase text-xs">end</div>
             </a>
-            }
-            }
+            }            
         </div>
     </div>
 </section>
@@ -133,11 +150,11 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
 
 <dialog #dialogError class="modal">
     <div class="modal-box bg-neutral-100">
-    <p class="py-2">{{ errorDialogText() }}</p>
-    <div class="modal-action typewriter-text">
-        <button (click)="this.dialogError.nativeElement.close()" class="btn w-max">Cancel</button>
+        <p class="py-2">{{ errorDialogText() }}</p>
+        <div class="modal-action typewriter-text">
+            <button (click)="this.dialogError.nativeElement.close()" class="btn w-max">Cancel</button>
+        </div>
     </div>
-</div>
 </dialog>
 
 <dialog #dialogVote class="modal">
@@ -166,7 +183,7 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
         </div>
         }
 
-        @if(voteSummary() && voteSummary()!.length > 0){
+        @if(voteIsActive() && voteSummary() && voteSummary()!.length > 0){
         <div class="flex flex-col text-center alert alert-info px-2 mt-3 gap-0">
             @for (vote of voteSummary(); track vote.authorName) {
             <div class="flex gap-1">
@@ -197,17 +214,17 @@ bg-red-500 text-white hover:text-neutral-100 mt-8">
         }
 
         <div class="my-2 text-sm text-red-900">
-        @if(!voteIsActive()){
+            @if(!voteIsActive()){
             {{ voteOutcome() }}
-        }@else {
+            }@else {
             Waiting for votes...
-        }
+            }
         </div>
 
         @if (!voteIsActive()){
         <div class="flex justify-center typewriter-text mt-2">
             <button (click)="closeVoteDialog()" class="btn bg-neutral-500 w-max">OK</button>
-        </div>        
+        </div>
         }
     </div>
 </dialog>
