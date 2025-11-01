@@ -1,7 +1,7 @@
 <div class="pt-8"><app-title-block /></div>
 
 @if (retrievedStory()){
-
+<div class="mb-16">
 <section id="title-block" class="bg-white text-black shadow-neutral-400 shadow-sm p-2">
     <h1 class="text-xl font-bold">{{ retrievedStory()!.title }}</h1>
     <h2 class="font-semibold">a {{ retrievedStory()!.genre! }} story by {{ retrievedStory()!.authors! | authorList}}
@@ -72,52 +72,42 @@
     </div>
     }
 </section>
+</div>
+
+
 } @else {
 <h1 class="text-xl text-red-900">Story not found. Maybe you should <a routerLink="/stories/new"
         class="text-red-500 underline">start a new one</a>?</h1>
 }
 
-<section id="action-buttons">
-    <div class="fixed bottom-0 left-0 w-full py-2 flex-col justify-center items-center
-bg-red-500 text-white hover:text-neutral-100 mt-8">
-        <div class="flex justify-evenly gap-2">
-            <a type="button" (click)="leave()" class="cursor-pointer hover:text-neutral-300">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-                </svg>
-                <div class="flex justify-center uppercase text-xs">leave</div>
-            </a>
-
-            @if (stateInProgress()
+<div class="dock bg-red-500 text-neutral-content">
+  <button (click)="leave()">
+ <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+            </svg>
+<span class="dock-label uppercase">Leave</span>
+</button>
+@if (stateInProgress()
                     && !storyEnded()
                     && retrievedStory() != undefined
                     && retrievedStory()!.words.length > 0){
-            <a type="button" (click)="voteToEdit()" class="cursor-pointer hover:text-neutral-300">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12l2.25-2.25M14.25 12 12 14.25m-2.58 4.92-6.374-6.375a1.125 1.125 0 0 1 0-1.59L9.42 4.83c.21-.211.497-.33.795-.33H19.5a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25h-9.284c-.298 0-.585-.119-.795-.33Z" />
-                </svg>
+<button (click)="voteToEdit()">
+ <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+</svg>
 
-                <div class="flex justify-center uppercase text-xs">edit</div>
-            </a>
-            
-            <a type="button" (click)="voteToEnd()" class="cursor-pointer hover:text-neutral-300">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75h1.5m9 0h-9" />
-                </svg>
+<span class="dock-label uppercase">Edit</span>
+</button>
+<button (click)="voteToEnd()">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75h1.5m9 0h-9" />
+</svg>
 
-                <div class="flex justify-center uppercase text-xs">end</div>
-            </a>
-            }            
-        </div>
-    </div>
-</section>
-
+<span class="dock-label uppercase">End</span>
+</button>
+}
+</div>
 
 <dialog #dialogEnterName class="modal">
     <div class="modal-box bg-neutral-100">
