@@ -31,6 +31,10 @@ export class ApiService {
      return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/addword`, { word: word, authorName: authorName});
   }
 
+  skipTurn(storyId: string, authorName: string): Observable<Story> {
+     return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/skipTurn`, { authorName: authorName});
+  }
+
   joinStory(storyId: string, authorId: string, authorName: string){
      return this.http.patch<Story> (`${this.baseUrl}/story/${storyId}/join`, { authorId, authorName });
   }

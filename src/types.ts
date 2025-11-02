@@ -5,12 +5,14 @@ export enum SocketMessageType {
   AuthorLeft = 'author_left',
   StoryDeleted = 'story_deleted',
   WordAdded = 'word_added',
+  SkippedTurn = 'skipped_turn',
   StateChanged = 'state_changed',
   VoteStarted = 'vote_started',
   VoteMade = 'vote_made',
   VoteEnded = "vote_ended",
   ClientVoteOutcome = "client_vote_outcome",
-  ClientVoteOutcomeMessage = "client_vote_outcome_message"
+  ClientVoteOutcomeMessage = "client_vote_outcome_message",
+  ClientCountdownTimerExpired = "client_countdown_timer_expired"
 }
 
 export type User = {
@@ -29,13 +31,15 @@ export type Story = {
   authorTurn: number;
   votingScheme?: VotingScheme;
   voteDetails?: VoteDetails;
+  timeLimit: number;
 }
 
 export type NewStoryDto = {
   title: string,
   genre: string,
   openingText?: string,
-  wordLimit: number
+  wordLimit: number,
+  timeLimit: number
 }
 
 export type StoryWord = {

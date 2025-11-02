@@ -1,14 +1,14 @@
 import { Component, inject, signal, ViewChild, ElementRef, AfterViewInit, computed } from '@angular/core';
-import { TitleBlock } from "../../../components/title-block/title-block";
+import { TitleBlock } from "../../components/title-block/title-block";
 import { Router } from '@angular/router';
-import { ApiService } from '../../../services/api-service';
+import { ApiService } from '../../services/api-service';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActionBar } from "../../../components/actionbar/actionbar";
-import { LocalStorage, NewStoryDto, Story } from '../../../types';
+import { Dock } from "../../components/dock/dock";
+import { LocalStorage, NewStoryDto, Story } from '../../types';
 
 @Component({
   selector: 'app-new',
-  imports: [TitleBlock, ReactiveFormsModule, ActionBar],
+  imports: [TitleBlock, ReactiveFormsModule, Dock ],
   templateUrl: './new.html',
   styleUrl: './new.css'
 })
@@ -28,7 +28,8 @@ export class New implements AfterViewInit {
     "In a distant galaxy, "];
 
   protected genres: Array<string> = ["General Fiction", "Crime", "Fantasy", "Historical", "Horror", "Kids", "Romance", "Sci-fi", "Thriller"];
-  protected wordLimits: Array<number> = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500];    
+  protected wordLimits: Array<number> = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500];
+  protected timeLimits: Array<number> = [0, 10, 20, 30, 45, 60];    
 
   @ViewChild('inputTitle') inputTitle!: ElementRef;
 
@@ -36,11 +37,13 @@ export class New implements AfterViewInit {
     storyTitle: ["", [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
     wordLimit: [50, [Validators.min(50), Validators.max(1000)]],
     openingText: [this.getOpeningText()],
-    genre: ["General Fiction"]
+    genre: ["General Fiction"],
+    timeLimit: [0, [Validators.min(0), Validators.max(60)]]
   });
 
   get storyTitle() { return this.newStoryForm.get('storyTitle'); }
   get wordLimit() { return this.newStoryForm.get('wordLimit'); }
+  get timeLimit() { return this.newStoryForm.get('timeLimit'); }
   
   ngAfterViewInit(): void {
     this.inputTitle.nativeElement.focus();
@@ -52,7 +55,8 @@ export class New implements AfterViewInit {
       title: this.newStoryForm.value.storyTitle!,
       genre: this.newStoryForm.value.genre!,
       openingText: this.newStoryForm.value.openingText ?? undefined,
-      wordLimit: this.newStoryForm.value.wordLimit!
+      wordLimit: this.newStoryForm.value.wordLimit!,
+      timeLimit: this.newStoryForm.value.timeLimit!
     };
 
       this.apiService.addStory(newStoryDto).subscribe({

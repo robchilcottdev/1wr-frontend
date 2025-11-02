@@ -1,14 +1,13 @@
 import { Component, ElementRef, inject, signal, ViewChild, AfterViewInit, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { TitleBlock } from "../../components/title-block/title-block";
 import { ApiService } from '../../services/api-service';
+import { SocketService } from '../../services/socket-service';
+import { AudioService } from '../../services/audio-service';
 import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState, VoteType, DisplayedVote, VotingScheme } from '../../types';
 import { AuthorListPipe } from '../../core/author-list-pipe';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { SocketService } from '../../services/socket-service';
 import { RestrictStoryword } from "../../core/restrict-storyword-directive";
-import { AudioService } from '../../services/audio-service';
 
 @Component({
   selector: 'app-stories',
@@ -48,6 +47,11 @@ export class Stories implements AfterViewInit {
 
   protected errorDialogText = signal("");
   protected allowNavigateAway = signal(false);
+
+  protected countdownTimerMax = signal(0);
+  protected countdownTimer = signal(0);
+  protected intervalId = signal<number | null>(null);
+  protected countdownTimerInitialized = signal<boolean>(false);
   //#endregion
 
   //#region computed signals
@@ -78,6 +82,20 @@ export class Stories implements AfterViewInit {
     const currentTurnAuthor = this.retrievedStory()!.authors[authorTurnIndex];
 
     return currentTurnAuthor.name;
+  });
+
+  protected hasAtLeastOneAuthor = computed(() => {
+    if (this.retrievedStory()){
+      return this.retrievedStory()!.authors.length > 0;
+    }
+    return false;
+  });
+
+  protected hasLessThanTwoAuthors = computed(() => {
+    if (this.retrievedStory()){
+      return this.retrievedStory()!.authors.length < 2;
+    }
+    return true;
   });
 
   protected wordLimitReached = computed(() => {
@@ -124,6 +142,11 @@ export class Stories implements AfterViewInit {
           ${message.nextAuthor}, it's your turn.`);
           this.getStory();
           break;
+        case SocketMessageType.SkippedTurn:
+        case SocketMessageType.ClientCountdownTimerExpired:
+          this.messages.set(`${message.author} passed or ran out of time!`);
+          this.getStory();
+          break;
         case SocketMessageType.AuthorJoined:
           this.getStory();          
           this.messages.set(`${message.author} joined the story.`);
@@ -158,9 +181,20 @@ export class Stories implements AfterViewInit {
       const previousStoryState = this.retrievedStory()?.state ?? StoryState.AwaitingAuthors;
 
       this.apiService.getStory(storyId).subscribe({
-        next: (story: Story) => {
-          console.log("Story returned by getStory:", story);
+        next: (story: Story) => { 
+          if (!this.countdownTimerInitialized()) {
+            this.countdownTimerMax.set(story.timeLimit);
+            this.countdownTimer.set(story.timeLimit);
+            this.countdownTimerInitialized.set(true);
+          }
+
           this.retrievedStory.set(story);
+
+          // if a time limit per turn has been set, reset it and start it counting down
+          if (this.countdownTimerMax() > 0) {
+            this.resetCountdownTimer();
+            this.triggerCountdown();
+          }
           
           if (!this.authorNameConfirmed()){
             // if author name in local storage, pre-populate the enter name dialog
@@ -180,10 +214,13 @@ export class Stories implements AfterViewInit {
           if (story.state != previousStoryState && this.stateInProgress() && story.authors.length > 1) {
             this.messages.set(`${this.currentAuthorTurnName()}, it's your turn.`);
           }
-          if (story.authors.length < 2) this.messages.set(this.messages() + " Waiting for 2 or more authors.");
+          if (story.authors.length < 2) {
+            if (this.countdownTimerMax() > 0) this.resetCountdownTimer();
+            this.messages.set(this.messages() + " Waiting for 2 or more authors.");
+          }
 
           // handle voting
-          if (this.voteIsActive()) this.processVote(story);          
+          if (this.voteIsActive()) this.processVote(story);
         },
         error: (err) => {
           console.log("Error retrieving story:", err);
@@ -271,7 +308,6 @@ export class Stories implements AfterViewInit {
     this.apiService.updateStoryState(this.storyId!, StoryState.InProgress).subscribe({
       next: (story: Story) => {
         this.messages.set(`${story.authors[story.authorTurn].name}, it's your turn`);
-        this.getStory();
       },
       error: (err) => {
         console.log("Error beginning story:", err);
@@ -288,7 +324,7 @@ export class Stories implements AfterViewInit {
 
     if (this.wordToAdd().length > 20) {
       this.messages.set("So you like big words? 20 characters should be more than enough!");
-      this.wordToAdd.set(this.wordToAdd().slice(0, 19));
+      this.wordToAdd.set("");
       return;
     }
     this.apiService.addWord(this.storyId!, this.wordToAdd(), this.authorName()).subscribe({
@@ -339,6 +375,8 @@ export class Stories implements AfterViewInit {
   }
 
   processVote(story: Story): void {
+    if (this.countdownTimerMax() > 0) this.resetCountdownTimer();
+
     // populate and show the voting dialog
     let voteSummary: Array<DisplayedVote> = [];
 
@@ -404,13 +442,34 @@ export class Stories implements AfterViewInit {
     this.voteOutcome.set("");
   }
 
+  triggerCountdown(){    
+    this.countdownTimer.set(this.countdownTimerMax());
+    this.intervalId.set(setInterval(()=> {
+      this.countdownTimer.set(this.countdownTimer() - 1);
+      if (this.countdownTimer() === 0) {
+        if (this.isThisAuthorsTurn()){
+          this.apiService.skipTurn(localStorage.getItem(LocalStorage.CurrentStoryId)!, this.authorName()).subscribe({
+            error: (err) => {
+              console.log("Error processing countdownTimer reaching 0:", err);
+            }
+          });
+        }
+      }
+    }, 1000));
+  }
+
+  resetCountdownTimer(){
+    if (this.intervalId()) clearInterval(this.intervalId()!);
+    this.countdownTimer.set(this.countdownTimerMax());
+  }
+
   constructor() {
     this.initializeSocket();
     this.messages.set("");
   }
 
   ngAfterViewInit(): void {
-
+    this.countdownTimerInitialized.set(false);
     this.getStory();
   }
 }

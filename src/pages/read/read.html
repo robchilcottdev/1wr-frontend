@@ -1,0 +1,23 @@
+<div class="pt-8"><app-title-block /></div>
+
+<h1 class="my-2 text-xl text-red-900">Completed stories</h1>
+
+@for (story of retrievedStories(); track story.storyId){
+    <div class="border border-gray-400 cursor-pointer" [class.bg-gray-300]="$even">
+    <div class="font-bold">{{ story.title }}</div>
+    <div class="font-semibold text-sm text-gray-600">A {{ story.genre }} story of {{ story.words.length }} words</div>    
+    <!-- <h3 class="text-lg font-light">{{ story.authors | authorList}}</h3> -->    
+    </div>
+}
+
+@if (retrievedStories()!.length === 0) {
+<div>There are no currently completed stories to read.</div>
+}
+<div class="flex flex-row m-auto w-fit gap-2 mt-3">
+    <button (click)="handleRefresh($event)"
+        class=" bg-neutral-100 hover:bg-neutral-200 text-black py-1 px-2 rounded-xl border-black border">
+        Refresh list
+    </button>
+</div>
+
+<app-dock />

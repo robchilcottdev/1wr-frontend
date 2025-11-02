@@ -39,15 +39,28 @@
       <span class="bg-white text-black">Genre</span>
     </label>
 
-      <label class="floating-label">
-        <input #inputTitle type="text" formControlName="openingText" placeholder="Opening text (optional)"
-          class="input bg-neutral-100 border border-black w-full" />
-        <span class="bg-white text-black">Opening text (optional)</span>
-      </label>
+    <label class="floating-label">
+      <input #inputTitle type="text" formControlName="openingText" placeholder="Opening text (optional)"
+        class="input bg-neutral-100 border border-black w-full" />
+      <span class="bg-white text-black">Opening text (optional)</span>
+    </label>
 
+    <label class="floating-label">
+      <select formControlName="timeLimit" class="select bg-neutral-100 border border-black w-full">
+        @for (timeLimit of this.timeLimits; track timeLimit) {
+        <option [value]="timeLimit">
+          @if (timeLimit === 0){
+            No time limit
+          }@else {
+            {{timeLimit}}
+          }
+        </option>
+        }
+      </select>
+      <span class="bg-white text-black">Time limit for author to add a word</span>
+    </label>
+    <p class="text-xs text-left text-gray-500 px-2 mt-2">The time limit is currently lifted when authors are called to vote.</p>
     </div>
-
-
   
   <div class="flex flex-col justify-center m-auto w-max gap-2 mt-6">
     <button type="submit" class="typewriter-text btn             
@@ -71,4 +84,4 @@
   <span>{{ alertMessage() }}</span>
 </div>
 }
-<app-actionbar />
+<app-dock />

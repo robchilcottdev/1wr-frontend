@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { TitleBlock } from "../../components/title-block/title-block";
-import { ActionBar } from "../../components/actionbar/actionbar";
+import { Dock } from "../../components/dock/dock";
 
 @Component({
   selector: 'app-page-not-found',
-  imports: [TitleBlock, ActionBar],
+  imports: [TitleBlock, Dock],
   templateUrl: './page-not-found.html',
   styleUrl: './page-not-found.css'
 })

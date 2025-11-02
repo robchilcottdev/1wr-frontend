@@ -4,12 +4,12 @@ import { LocalStorage, Story } from '../../../types';
 import { AuthorListPipe } from '../../../core/author-list-pipe';
 import { TitleBlock } from '../../../components/title-block/title-block';
 import { RouterLink, Router } from '@angular/router';
-import { ActionBar } from "../../../components/actionbar/actionbar";
+import { Dock } from "../../../components/dock/dock";
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-open',
-  imports: [AuthorListPipe, TitleBlock, RouterLink, ActionBar, FormsModule],
+  imports: [AuthorListPipe, TitleBlock, RouterLink, Dock, FormsModule],
   templateUrl: './open.html',
   styleUrl: './open.css'
 })

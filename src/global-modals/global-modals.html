@@ -1,5 +1,5 @@
 <dialog #dialogContinueStory class="modal">
-  <div class="modal-box bg-neutral-100">
+  <div class="modal-box bg-neutral-100 text-black">
     <p class="py-2">You have a story, '{{ retrievedStoryTitle() }}', in progress. Do you want to continue?</p>
     <div class="modal-action typewriter-text">
         <button (click)="continueStory()" class="btn bg-red-500 w-max">Yes</button>
@@ -9,7 +9,7 @@
 </dialog>
 
   <dialog #dialogStoryNotFound class="modal">
-  <div class="modal-box bg-neutral-100">
+  <div class="modal-box bg-neutral-100 text-black">
     <p class="py-2">The story you had in progress is no longer available.</p>
     <div class="modal-action typewriter-text">
       <button (click)="closeStoryNotFoundDialog()" class="btn w-max">OK</button>

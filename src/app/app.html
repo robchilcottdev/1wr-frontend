@@ -13,7 +13,9 @@
 
 <section class="container mx-auto text-center font-mono text-gray-800">
   @if(socketService.isConnected()){
-    <router-outlet />
+    <section id="main" class="pb-24">
+      <router-outlet />
+    </section>
   }@else {
     <app-connecting />
   }
