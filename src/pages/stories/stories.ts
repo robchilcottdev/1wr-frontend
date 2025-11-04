@@ -22,6 +22,8 @@ export class Stories implements AfterViewInit {
   @ViewChild('dialogVote') dialogVote!: ElementRef;
   @ViewChild('dialogError') dialogError!: ElementRef;
   @ViewChild('storyBodyText') storyBodyText!: ElementRef;
+  @ViewChild('endOfStoryBodyText') endOfStoryBodyText!: ElementRef;
+  @ViewChild('lastWord') lastWord!: ElementRef;
 
   // #region variables
   protected readonly router = inject(Router);
@@ -135,7 +137,7 @@ export class Stories implements AfterViewInit {
     const socket: WebSocket = this.socketService.socket;
     socket.addEventListener("message", (event: any) => {
       const message = JSON.parse(event.data);
-      console.info(`${new Date().toUTCString()} - Socket message received: ${message.type} | ${JSON.stringify(message)}`);
+      console.info(`${new Date().toUTCString()} - Socket message received: ${message.type} | ${JSON.stringify(message)}`);              
       switch (message.type) {
         case SocketMessageType.WordAdded:
           this.messages.set(`${message.author} added '${message.word.replace("\\", "")}' to the story. 
@@ -179,6 +181,7 @@ export class Stories implements AfterViewInit {
     const storyId = localStorage.getItem(LocalStorage.CurrentStoryId) ?? this.storyId;
     if (storyId) {
       const previousStoryState = this.retrievedStory()?.state ?? StoryState.AwaitingAuthors;
+      const previousWordCount = this.retrievedStory()?.words.length;
 
       this.apiService.getStory(storyId).subscribe({
         next: (story: Story) => { 
@@ -189,6 +192,12 @@ export class Stories implements AfterViewInit {
           }
 
           this.retrievedStory.set(story);
+
+          let flashNewWord = false;
+          if(previousWordCount && previousWordCount != story.words.length) {
+            flashNewWord = true;
+          }
+          this.scrollToBottom(flashNewWord);
 
           // if a time limit per turn has been set, reset it and start it counting down
           if (this.countdownTimerMax() > 0) {
@@ -461,6 +470,22 @@ export class Stories implements AfterViewInit {
   resetCountdownTimer(){
     if (this.intervalId()) clearInterval(this.intervalId()!);
     this.countdownTimer.set(this.countdownTimerMax());
+  }
+
+  scrollToBottom(flashNewWord: boolean) {
+    setTimeout(() => {
+      this.endOfStoryBodyText.nativeElement.scrollIntoView({ behavior: 'smooth' });
+      if (flashNewWord) this.flashFinalWord();
+    }, 100);
+  }
+
+  flashFinalWord() {
+    if (this.lastWord){
+      this.lastWord.nativeElement.classList.add("bg-yellow-300", "border", "border-black");      
+      setTimeout(() => {
+        this.lastWord.nativeElement.classList.remove("bg-yellow-300", "border", "border-black");
+      }, 500);
+    }
   }
 
   constructor() {

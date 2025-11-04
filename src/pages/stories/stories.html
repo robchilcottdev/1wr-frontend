@@ -37,9 +37,18 @@
     <div #storyBodyText class="text-left align-middle text-lg">
         @for (storyWord of story!.words; track $index) {
             @if (storyWord.word.startsWith("\\")){
-                <br /><br />{{ storyWord.word.slice(1, storyWord.word.length) }}&nbsp;
+                <br /><br />
+                @if(!$last){
+                    {{ storyWord.word.slice(1, storyWord.word.length) }}&nbsp;
+                }@else {
+                    <span #lastWord>{{ storyWord.word.slice(1, storyWord.word.length) }}</span>&nbsp;                    
+                }
             }@else {
-                {{ storyWord.word }}&nbsp;
+                @if (!$last){
+                    {{ storyWord.word }}&nbsp;
+                }@else {
+                    <span #lastWord>{{ storyWord.word }}</span>&nbsp;                    
+                }
             }
         }
         <!-- word count badge -->
@@ -59,7 +68,7 @@
         }
     }
     </div>
-    
+
     <!-- Add Word button -->
     @if (isThisAuthorsTurn()
     && stateInProgress()
@@ -84,6 +93,7 @@
             }
         </div>
         }
+    <div #endOfStoryBodyText></div>
 </section>
 } @else {
 <h1 class="text-xl text-red-900">Story not found.</h1>
