@@ -149,7 +149,8 @@ export class Stories implements AfterViewInit {
           this.messages.set(`${message.author} passed or ran out of time!`);
           this.getStory();
           setTimeout(() => {
-            this.audioService.playSound(AudioFile.SkipTurnBeep);
+            let mySound = new Audio("/assets/audio/" + AudioFile.SkipTurnBeep);
+            mySound.play();
           }, 500);
           break;
         case SocketMessageType.AuthorJoined:
@@ -480,7 +481,8 @@ export class Stories implements AfterViewInit {
       this.endOfStoryBodyText.nativeElement.scrollIntoView({ behavior: 'smooth' });
       if (flashNewWord) {
         this.flashFinalWord();
-        this.audioService.playSound(AudioFile.TypewriterKeystroke);
+        let mySound = new Audio("/assets/audio/" + AudioFile.TypewriterKeystroke);
+        mySound.play();
       }
     }, 100);
   }
