@@ -147,11 +147,10 @@ export class Stories implements AfterViewInit {
         case SocketMessageType.SkippedTurn:
         case SocketMessageType.ClientCountdownTimerExpired:
           this.messages.set(`${message.author} passed or ran out of time!`);
-          this.getStory();
-          setTimeout(() => {
-            let mySound = new Audio("/assets/audio/" + AudioFile.SkipTurnBeep);
-            mySound.play();
-          }, 500);
+          let mySound = new Audio("/assets/audio/" + AudioFile.SkipTurnBeep);
+          mySound.volume = 0.5;            
+          mySound.play();
+          this.getStory();          
           break;
         case SocketMessageType.AuthorJoined:
           this.getStory();          
@@ -482,6 +481,7 @@ export class Stories implements AfterViewInit {
       if (flashNewWord) {
         this.flashFinalWord();
         let mySound = new Audio("/assets/audio/" + AudioFile.TypewriterKeystroke);
+        mySound.volume = 0.5;
         mySound.play();
       }
     }, 100);
