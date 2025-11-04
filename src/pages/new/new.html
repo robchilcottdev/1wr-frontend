@@ -8,13 +8,14 @@
 </svg>
       Randomize
   </button></div>
-
-    <label class="floating-label">
-      <input #inputTitle type="text" formControlName="storyTitle" required placeholder="Story title (3-50 characters)"
-        class="input bg-neutral-100 border border-black w-full" />
-      <span class="bg-white text-black">Story title (3-50 characters)</span>
+      <label class="floating-label">
+      <select formControlName="genre" class="select bg-neutral-100 border border-black w-full">
+        @for (genre of this.genres; track genre) {
+        <option [value]="genre">{{genre}}</option>
+        }
+      </select>
+      <span class="bg-white text-black">Genre</span>
     </label>
-
     <label class="floating-label">
       <input type="number" required min="50" max="500" formControlName="wordLimit"
         placeholder="Word limit (50-500 words)" class="input bg-neutral-100 border border-black w-full" />
@@ -29,15 +30,6 @@
       <span>Word limit must be between 50 and 500 words</span>
     </div>
     }
-
-    <label class="floating-label">
-      <select formControlName="genre" class="select bg-neutral-100 border border-black w-full">
-        @for (genre of this.genres; track genre) {
-        <option [value]="genre">{{genre}}</option>
-        }
-      </select>
-      <span class="bg-white text-black">Genre</span>
-    </label>
 
     <label class="floating-label">
       <input #inputTitle type="text" formControlName="openingText" placeholder="Opening text (optional)"
@@ -58,9 +50,14 @@
         }
       </select>
       <span class="bg-white text-black">Time limit for author to add a word</span>
+      <p class="text-xs text-left text-gray-500 px-2 mt-2">The time limit is currently lifted when authors are called to vote.</p>
     </label>
-    <p class="text-xs text-left text-gray-500 px-2 mt-2">The time limit is currently lifted when authors are called to vote.</p>
-    </div>
+    <label class="floating-label">
+      <input #inputTitle type="text" formControlName="storyTitle" required placeholder="Story title (3-50 characters)"
+        class="input bg-neutral-100 border border-black w-full" />
+      <span class="bg-white text-black">Story title (3-50 characters)</span>
+    </label>
+  </div>
   
   <div class="flex flex-col justify-center m-auto w-max gap-2 mt-6">
     <button type="submit" class="typewriter-text btn             

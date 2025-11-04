@@ -148,6 +148,9 @@ export class Stories implements AfterViewInit {
         case SocketMessageType.ClientCountdownTimerExpired:
           this.messages.set(`${message.author} passed or ran out of time!`);
           this.getStory();
+          setTimeout(() => {
+            this.audioService.playSound(AudioFile.SkipTurnBeep);
+          }, 500);
           break;
         case SocketMessageType.AuthorJoined:
           this.getStory();          
@@ -475,7 +478,10 @@ export class Stories implements AfterViewInit {
   scrollToBottom(flashNewWord: boolean) {
     setTimeout(() => {
       this.endOfStoryBodyText.nativeElement.scrollIntoView({ behavior: 'smooth' });
-      if (flashNewWord) this.flashFinalWord();
+      if (flashNewWord) {
+        this.flashFinalWord();
+        this.audioService.playSound(AudioFile.TypewriterKeystroke);
+      }
     }, 100);
   }
 

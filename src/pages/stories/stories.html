@@ -33,7 +33,17 @@
 
 <section id="playfield" [class.bg-amber-50]="isThisAuthorsTurn()" [class.bg-neutral-300]="!isThisAuthorsTurn()"
     [class.bg-neutral-100]="storyEnded()" class="w-full h-80 overflow-y-scroll mt-3 p-3 typewriter-text">
-
+    <div>
+        <!-- countdown turn timer -->
+        @if(countdownTimerMax() > 0 && stateInProgress() && !hasLessThanTwoAuthors()){
+        <progress class="progress w-56"
+            [class.progress-success]="countdownTimer() >= countdownTimerMax() * 0.25"
+            [class.progress-error]="countdownTimer() <= countdownTimerMax() * 0.25"
+            [value]="countdownTimer()"
+            [max]="countdownTimerMax()">
+        </progress>
+        }
+    </div>
     <div #storyBodyText class="text-left align-middle text-lg">
         @for (storyWord of story!.words; track $index) {
             @if (storyWord.word.startsWith("\\")){
@@ -58,14 +68,6 @@
             <span class="text-sm font-bold">{{ story!.words.length }}/{{ story!.wordLimit }}</span>
             <span class="text-xs">words</span>
         </div>
-        <!-- countdown turn timer -->
-        @if(countdownTimerMax() > 0 && stateInProgress() && !hasLessThanTwoAuthors()){
-            <div class="radial-progress ml-2 text-xs text-green-600" style="--size:2rem"
-                [style.--value]="countdownTimer()/countdownTimerMax() * 100"
-                [aria-valuenow]="countdownTimer()/countdownTimerMax() * 100"
-                [class.text-red-600]="countdownTimer() <= countdownTimerMax() * 0.25" role="progressbar">{{ countdownTimer() }}
-            </div>
-        }
     }
     </div>
 

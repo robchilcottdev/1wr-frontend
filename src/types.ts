@@ -94,6 +94,7 @@ export enum LocalStorage {
 }
 
 export enum AudioFile {
-  TypewriterKeystroke = "typewriter-keystroke.wav"
+  TypewriterKeystroke = "typewriter-keystroke.mp3",
+  SkipTurnBeep = "skip-turn-beep.wav"
 }
 
