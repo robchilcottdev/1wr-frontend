@@ -24,6 +24,8 @@ export class Stories implements AfterViewInit {
   @ViewChild('storyBodyText') storyBodyText!: ElementRef;
   @ViewChild('endOfStoryBodyText') endOfStoryBodyText!: ElementRef;
   @ViewChild('lastWord') lastWord!: ElementRef;
+  @ViewChild('audioAddWord') audioAddWordRef!: ElementRef;
+  @ViewChild('audioSkipTurn') audioSkipTurnRef!: ElementRef;
 
   // #region variables
   protected readonly router = inject(Router);
@@ -54,6 +56,9 @@ export class Stories implements AfterViewInit {
   protected countdownTimer = signal(0);
   protected intervalId = signal<number | null>(null);
   protected countdownTimerInitialized = signal<boolean>(false);
+
+  protected audioAddWordUrl = "./assets/audio/" + AudioFile.TypewriterKeystroke;
+  protected audioSkipTurnUrl = "./assets/audio/" + AudioFile.SkipTurnBeep;
   //#endregion
 
   //#region computed signals
@@ -143,14 +148,13 @@ export class Stories implements AfterViewInit {
           this.messages.set(`${message.author} added '${message.word.replace("\\", "")}' to the story. 
           ${message.nextAuthor}, it's your turn.`);
           this.getStory();
+          this.audioAddWordRef!.nativeElement.play();
           break;
         case SocketMessageType.SkippedTurn:
         case SocketMessageType.ClientCountdownTimerExpired:
           this.messages.set(`${message.author} passed or ran out of time!`);
-          let mySound = new Audio("/assets/audio/" + AudioFile.SkipTurnBeep);
-          mySound.volume = 0.5;            
-          mySound.play();
-          this.getStory();          
+          this.getStory();
+          this.audioSkipTurnRef!.nativeElement.play();
           break;
         case SocketMessageType.AuthorJoined:
           this.getStory();          
@@ -479,10 +483,7 @@ export class Stories implements AfterViewInit {
     setTimeout(() => {
       this.endOfStoryBodyText.nativeElement.scrollIntoView({ behavior: 'smooth' });
       if (flashNewWord) {
-        this.flashFinalWord();
-        let mySound = new Audio("/assets/audio/" + AudioFile.TypewriterKeystroke);
-        mySound.volume = 0.5;
-        mySound.play();
+        this.flashFinalWord()
       }
     }, 100);
   }
