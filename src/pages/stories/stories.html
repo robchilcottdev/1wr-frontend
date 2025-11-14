@@ -61,6 +61,9 @@
                 }
             }
         }
+        @if(storyEnded()){
+            <br/><br/><span class="text-center">THE END</span>
+        }
         <!-- word count badge -->
         @if (stateInProgress()){
         <div class="badge badge-info w-fit h-fit text-center ml-2 p-1" [class.bg-black]="wordLimitReached()"

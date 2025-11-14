@@ -5,13 +5,13 @@ import { SocketService } from '../../services/socket-service';
 import { AudioService } from '../../services/audio-service';
 import { AudioFile, LocalStorage, SocketMessageType, Story, StoryState, VoteType, DisplayedVote, VotingScheme } from '../../types';
 import { AuthorListPipe } from '../../core/author-list-pipe';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RestrictStoryword } from "../../core/restrict-storyword-directive";
 
 @Component({
   selector: 'app-stories',
-  imports: [TitleBlock, FormsModule, AuthorListPipe, RestrictStoryword, RouterLink],
+  imports: [TitleBlock, FormsModule, AuthorListPipe, RestrictStoryword],
   templateUrl: './stories.html',
   styleUrl: './stories.css'
 })
@@ -345,7 +345,6 @@ export class Stories implements AfterViewInit {
     }
     this.apiService.addWord(this.storyId!, this.wordToAdd(), this.authorName()).subscribe({
       next: (story: Story) => {
-        // TODO: flash the latest word somehow?
       },
       error: (err) => {
         this.messages.set("Error adding word");
